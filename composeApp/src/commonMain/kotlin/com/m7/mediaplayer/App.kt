@@ -24,7 +24,7 @@ import mediaplayer.composeapp.generated.resources.Res
 import mediaplayer.composeapp.generated.resources.bg_light
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

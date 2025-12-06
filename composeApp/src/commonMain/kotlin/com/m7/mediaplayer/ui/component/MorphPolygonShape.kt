@@ -17,7 +17,6 @@ class MorphPolygonShape(
 
     private val matrix = Matrix()
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,

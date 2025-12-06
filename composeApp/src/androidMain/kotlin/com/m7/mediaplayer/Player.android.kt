@@ -25,5 +25,3 @@ class AndroidPlayer(context: Context) : Player {
         player.release()
     }
 }
-
-fun getPlayer(context: Context): Player = AndroidPlayer(context)

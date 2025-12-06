@@ -33,6 +33,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.compose.material:material3:1.9.0-alpha04")
                 with(compose) {
                     implementation(runtime)
                     implementation(foundation)
@@ -40,17 +41,22 @@ kotlin {
                     implementation(ui)
                     implementation(components.resources)
                     implementation(components.uiToolingPreview)
-                    implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-                    implementation("org.jetbrains.compose.material:material3:1.9.0-alpha04")
-                    implementation("org.jetbrains.androidx.graphics:graphics-shapes:1.0.0-alpha09")
                 }
                 with(libs) {
                     implementation(androidx.lifecycle.viewmodelCompose)
                     implementation(androidx.lifecycle.runtimeCompose)
-                    implementation(ktor.client.core)
-                    implementation(ktor.client.content.negotiation)
-                    implementation(ktor.serialization.kotlinx.json)
-                    implementation(koin.core)
+                    implementation(material.icons.extended)
+                    implementation(graphics.shapes)
+                    with(ktor) {
+                        implementation(core)
+                        implementation(content.negotiation)
+                        implementation(serialization.json)
+                    }
+                    with(koin) {
+                        implementation(core)
+                        implementation(compose)
+                        implementation(viewmodel)
+                    }
                 }
             }
         }
@@ -62,16 +68,15 @@ kotlin {
                     implementation(androidx.media3.exoplayer)
                     implementation(androidx.media3.session)
                     implementation(androidx.media3.ui)
-                    implementation(ktor.client.okhttp)
+                    implementation(ktor.okhttp)
                     implementation(koin.android)
-                    implementation(koin.androidx.compose)
                 }
             }
         }
         val iosMain by creating {
             dependsOn(commonMain)
             dependencies {
-                implementation(libs.ktor.client.darwin)
+                implementation(libs.ktor.darwin)
             }
         }
         val commonTest by getting {
