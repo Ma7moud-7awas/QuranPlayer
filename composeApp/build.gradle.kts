@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -10,13 +9,18 @@ plugins {
 }
 
 kotlin {
+    sourceSets.configureEach {
+        languageSettings.enableLanguageFeature("ExplicitBackingFields")
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
+        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -25,35 +29,43 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
-                implementation(libs.androidx.lifecycle.viewmodelCompose)
-                implementation(libs.androidx.lifecycle.runtimeCompose)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation("org.jetbrains.androidx.graphics:graphics-shapes:1.0.0-alpha09")
-                implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-
-                implementation("org.jetbrains.compose.material3:material3:1.9.0-alpha04") // Or the latest alpha version
-
-
+                with(compose) {
+                    implementation(runtime)
+                    implementation(foundation)
+                    implementation(material3)
+                    implementation(ui)
+                    implementation(components.resources)
+                    implementation(components.uiToolingPreview)
+                    implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+                    implementation("org.jetbrains.compose.material:material3:1.9.0-alpha04")
+                    implementation("org.jetbrains.androidx.graphics:graphics-shapes:1.0.0-alpha09")
+                }
+                with(libs) {
+                    implementation(androidx.lifecycle.viewmodelCompose)
+                    implementation(androidx.lifecycle.runtimeCompose)
+                    implementation(ktor.client.core)
+                    implementation(ktor.client.content.negotiation)
+                    implementation(ktor.serialization.kotlinx.json)
+                    implementation(koin.core)
+                }
             }
         }
         val androidMain by getting {
             dependencies {
                 implementation(compose.preview)
-                implementation(libs.androidx.activity.compose)
-                implementation(libs.ktor.client.okhttp)
-                implementation("androidx.graphics:graphics-shapes:1.1.0")
+                with(libs) {
+                    implementation(androidx.activity.compose)
+                    implementation(androidx.media3.exoplayer)
+                    implementation(androidx.media3.session)
+                    implementation(androidx.media3.ui)
+                    implementation(ktor.client.okhttp)
+                    implementation(koin.android)
+                    implementation(koin.androidx.compose)
+                }
             }
         }
         val iosMain by creating {

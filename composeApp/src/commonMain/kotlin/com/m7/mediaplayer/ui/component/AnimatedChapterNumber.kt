@@ -57,7 +57,7 @@ fun AnimatedChapterNumber(
     ) {
         // background clipping, applied in a child to rotate the play shape
         Spacer(
-            modifier
+            Modifier
                 .fillMaxSize()
                 .rotate(90f)
                 .clip(MorphPolygonShape(morphed, selectProgress))

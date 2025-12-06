@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,9 +14,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             App()
-//            val s = RoundedPolygon()
-//            val e = RoundedPolygon
-//            Morph(s, e)
         }
     }
 }
