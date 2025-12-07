@@ -3,11 +3,26 @@ package com.m7.mediaplayer
 import platform.UIKit.UIDevice
 
 class IOSPlayer: Player {
-    override val player = IOSPlayer()
+    override val player = AVPlayer().init()
+
+    override val isPlaying: Boolean
+        get() = player.timeControlStatus.playing
+
+    override val duration: Long
+        get() = player.currentItem.duration() ?: 0
+
+    override val currentPosition: Long
+        get() = player.currentPosition
+
+    override fun addItem(url: String) {
+        player.replaceCurrentItem(AVPlayerItem(url))
+    }
 
     override fun play(url: String) {
-        player.setMediaItem(MediaItem.fromUri(url))
-        player.prepare()
+        if (player.currentItem == null) {
+            addItem(url)
+        }
+
         player.play()
     }
 
@@ -16,12 +31,10 @@ class IOSPlayer: Player {
     }
 
     override fun seekTo(positionMs: Long) {
-        player.seekTo(positionMs)
+        player.seek(positionMs)
     }
 
     override fun release() {
         player.release()
     }
 }
-
-actual fun getPlayer(): Player = IOSPlayer()

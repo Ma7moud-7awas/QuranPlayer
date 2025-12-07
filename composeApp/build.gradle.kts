@@ -33,7 +33,6 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.compose.material:material3:1.9.0-alpha04")
                 with(compose) {
                     implementation(runtime)
                     implementation(foundation)
@@ -47,6 +46,8 @@ kotlin {
                     implementation(androidx.lifecycle.runtimeCompose)
                     implementation(material.icons.extended)
                     implementation(graphics.shapes)
+                    implementation(material3)
+
                     with(ktor) {
                         implementation(core)
                         implementation(content.negotiation)

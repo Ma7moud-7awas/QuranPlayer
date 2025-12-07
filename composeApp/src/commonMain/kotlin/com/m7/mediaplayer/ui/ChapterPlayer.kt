@@ -52,7 +52,7 @@ import kotlin.time.toDuration
 @Preview(locale = "")
 fun ChapterPlayerPreview() {
     ChapterPlayer(
-        Chapter(1, "Al Fatiha", 10),
+        Chapter(1, "Al Fatiha", 10, ""),
         true,
         {},
         {},

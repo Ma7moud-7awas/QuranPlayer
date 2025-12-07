@@ -6,10 +6,28 @@ import androidx.media3.exoplayer.ExoPlayer
 
 class AndroidPlayer(context: Context) : Player {
     override val player = ExoPlayer.Builder(context).build()
+        .apply {
+            prepare()
+        }
+
+    override val isPlaying: Boolean
+        get() = player.isPlaying
+
+    override val duration: Long
+        get() = player.duration
+
+    override val currentPosition: Long
+        get() = player.currentPosition
+
+    override fun addItem(url: String) {
+        player.setMediaItem(MediaItem.fromUri(url))
+    }
 
     override fun play(url: String) {
-        player.setMediaItem(MediaItem.fromUri(url))
-        player.prepare()
+        if (player.currentMediaItem == null) {
+            addItem(url)
+        }
+
         player.play()
     }
 

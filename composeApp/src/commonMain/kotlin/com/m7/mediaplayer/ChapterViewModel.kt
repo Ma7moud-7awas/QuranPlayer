@@ -10,10 +10,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 val chaptersPlaceholder = listOf(
-    Chapter(1, "Al Fatiha", 100),
-    Chapter(2, "Al Bakara", 1200),
-    Chapter(3, "A'l Emran", 30),
-    Chapter(4, "Al Nesaa", 10),
+    Chapter(1, "Al Fatiha", 100, ""),
+    Chapter(2, "Al Bakara", 1200, ""),
+    Chapter(3, "A'l Emran", 30, ""),
+    Chapter(
+        4,
+        "Al Nesaa",
+        10,
+        "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
+    ),
 )
 
 class ChapterViewModel(private val player: Player) : ViewModel() {
@@ -34,7 +39,6 @@ class ChapterViewModel(private val player: Player) : ViewModel() {
     }
 
     fun play(chapter: Chapter) {
-        // A fake url
-        player.play("https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3")
+        player.play(chapter.url)
     }
 }
