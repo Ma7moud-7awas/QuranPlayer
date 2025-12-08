@@ -38,9 +38,8 @@ class AndroidPlayerSource(
                             playerState.trySend(PlayerState.Loading)
                         }
 
-                        Player.STATE_READY -> {
-                            playerState.trySend(PlayerState.Ready)
-                        }
+                        Player.STATE_READY -> player.play()
+
 
                         Player.STATE_ENDED -> {
                             isCurrentItemEnded = true

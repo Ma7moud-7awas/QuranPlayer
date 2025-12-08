@@ -1,11 +1,19 @@
 package com.m7.mediaplayer.chapter.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
@@ -20,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,12 +41,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.mediaplayer.chapter.domain.model.PlayerAction
 import com.m7.mediaplayer.chapter.domain.model.PlayerState
 import com.m7.mediaplayer.core.Log
 import com.m7.mediaplayer.core.ui.theme.Green
+import com.m7.mediaplayer.core.ui.theme.GreenGrey
+import com.m7.mediaplayer.core.ui.theme.MediaPlayerTheme
 import com.m7.mediaplayer.core.ui.theme.Orange
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
@@ -48,12 +60,16 @@ import kotlin.time.toDuration
 @Composable
 @Preview(locale = "en")
 fun ChapterPlayerPreview() {
-    ChapterPlayer(
+    MediaPlayerTheme {
+        ChapterPlayer(
+//            PlayerState.Ended,
 //        PlayerState.Paused,
-        PlayerState.Playing(0, flowOf(0)),
+        PlayerState.Playing(10, flowOf(5)),
 //        PlayerState.Error(Exception()),
-        playerAction = {}
-    )
+//        PlayerState.Loading,
+            playerAction = {}
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -100,7 +116,9 @@ fun ChapterPlayer(
 
     HorizontalFloatingToolbar(
         modifier = modifier,
-        expanded = playerState is PlayerState.Playing,
+        expandedShadowElevation = 20.dp,
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        expanded = playerState is PlayerState.Playing || playerState is PlayerState.Paused,
         floatingActionButton = {
             // play/pause btn
             FloatingToolbarDefaults.StandardFloatingActionButton(
@@ -126,19 +144,25 @@ fun ChapterPlayer(
             }
         }
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // progress bar
-//            Slider(
-//                value = animatedProgress,
-//                onValueChange = {}
-//            )
-
-            LinearWavyProgressIndicator(
-                progress = { progressMillis / totalMillis.toFloat() },
-                amplitude = { .25f },
-                wavelength = 25.dp,
-                waveSpeed = 5.dp,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom,
+            modifier = Modifier
+                .requiredWidth(250.dp)
+                .padding(10.dp)
+        ) {
+            // progress slider
+            Slider(
+                value = progressMillis.toFloat(),
+                onValueChange = {
+                    playerAction(PlayerAction.Pause)
+                    progressMillis = it.toLong()
+                },
+                onValueChangeFinished = {
+                    playerAction(PlayerAction.SeekTo(progressMillis))
+                },
+                valueRange = 0f..totalMillis.toFloat(),
+                modifier = Modifier.height(20.dp)
             )
 
             Row(
@@ -147,31 +171,45 @@ fun ChapterPlayer(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // passed duration
-                DurationText(progressDuration.toString())
+                DurationText(
+                    progressDuration.toString(),
+                    modifier = Modifier.weight(.25f)
+                )
 
                 // prev btn | todo: check if there is a previous chapter or disable this btn
-                IconButton(onClick = { playerAction(PlayerAction.Previous) }) {
+                IconButton(
+                    onClick = { playerAction(PlayerAction.Previous) },
+                    modifier = Modifier.weight(.25f)
+                ) {
                     Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
                 }
 
                 // next btn | todo: check if there is a next chapter or disable this btn
-                IconButton(onClick = { playerAction(PlayerAction.Next) }) {
+                IconButton(
+                    onClick = { playerAction(PlayerAction.Next) },
+                    modifier = Modifier.weight(.25f)
+                ) {
                     Icon(Icons.AutoMirrored.Default.NavigateNext, "Next")
                 }
 
                 // total duration
-                DurationText(totalDuration.toString())
+                DurationText(
+                    totalDuration.toString(),
+                    TextAlign.End,
+                    modifier = Modifier.weight(.25f)
+                )
             }
         }
     }
 }
 
 @Composable
-fun DurationText(duration: String, modifier: Modifier = Modifier) {
+fun DurationText(duration: String, textAlign: TextAlign? = null, modifier: Modifier = Modifier) {
     Text(
         duration,
         fontFamily = FontFamily.Cursive,
         fontSize = 12.sp,
+        textAlign = textAlign,
         modifier = modifier
     )
 }

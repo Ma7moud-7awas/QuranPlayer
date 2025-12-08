@@ -10,8 +10,6 @@ sealed interface PlayerState {
 
     data object Loading : PlayerState
 
-    data object Ready : PlayerState
-
     data class Playing(
         val duration: Long,
         val updatedPosition: Flow<Long>
