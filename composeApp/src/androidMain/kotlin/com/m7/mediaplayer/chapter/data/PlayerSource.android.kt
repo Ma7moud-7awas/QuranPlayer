@@ -40,7 +40,6 @@ class AndroidPlayerSource(
 
                         Player.STATE_READY -> player.play()
 
-
                         Player.STATE_ENDED -> {
                             isCurrentItemEnded = true
                             playerState.trySend(PlayerState.Ended)

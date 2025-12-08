@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
@@ -64,7 +66,7 @@ fun ChapterPlayerPreview() {
         ChapterPlayer(
 //            PlayerState.Ended,
 //        PlayerState.Paused,
-        PlayerState.Playing(10, flowOf(5)),
+            PlayerState.Playing(10, flowOf(5)),
 //        PlayerState.Error(Exception()),
 //        PlayerState.Loading,
             playerAction = {}
@@ -116,9 +118,12 @@ fun ChapterPlayer(
 
     HorizontalFloatingToolbar(
         modifier = modifier,
+        shape = RoundedCornerShape(25),
         expandedShadowElevation = 20.dp,
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        expanded = playerState is PlayerState.Playing || playerState is PlayerState.Paused,
+        contentPadding = PaddingValues(horizontal = 5.dp),
+        expanded = playerState.let {
+            it is PlayerState.Playing || it is PlayerState.Paused || it is PlayerState.Loading
+        },
         floatingActionButton = {
             // play/pause btn
             FloatingToolbarDefaults.StandardFloatingActionButton(
@@ -148,7 +153,7 @@ fun ChapterPlayer(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom,
             modifier = Modifier
-                .requiredWidth(250.dp)
+                .requiredWidth(280.dp)
                 .padding(10.dp)
         ) {
             // progress slider
@@ -166,7 +171,7 @@ fun ChapterPlayer(
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -180,6 +185,7 @@ fun ChapterPlayer(
                 IconButton(
                     onClick = { playerAction(PlayerAction.Previous) },
                     modifier = Modifier.weight(.25f)
+                        .height(25.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
                 }
@@ -187,7 +193,7 @@ fun ChapterPlayer(
                 // next btn | todo: check if there is a next chapter or disable this btn
                 IconButton(
                     onClick = { playerAction(PlayerAction.Next) },
-                    modifier = Modifier.weight(.25f)
+                    modifier = Modifier.weight(.25f).height(25.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Default.NavigateNext, "Next")
                 }
