@@ -1,4 +1,4 @@
-rootProject.name = "MediaPlayer"
+rootProject.name = "QuranPlayer"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
