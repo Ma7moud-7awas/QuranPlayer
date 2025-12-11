@@ -28,6 +28,10 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
+
+        iosTarget.compilations.getByName("main") {
+            val nskeyvalueobserving by cinterops.creating
+        }
     }
 
     sourceSets {
@@ -75,7 +79,6 @@ kotlin {
             }
         }
         val iosMain by creating {
-            dependsOn(commonMain)
             dependencies {
                 implementation(libs.ktor.darwin)
             }
@@ -89,11 +92,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.m7.mediaplayer"
+    namespace = "com.m7.quranplayer"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.m7.mediaplayer"
+        applicationId = "com.m7.quranplayer"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
