@@ -52,6 +52,7 @@ class ChapterViewModel(
             is PlayerAction.Play -> play()
             is PlayerAction.Next -> next()
             is PlayerAction.Previous -> previous()
+            is PlayerAction.Repeat -> playerRepo.repeat()
             is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
         }
     }

@@ -113,6 +113,13 @@ class AndroidPlayerSource(
         player.seekTo(positionMs)
     }
 
+    override fun repeat() {
+        player.apply {
+            seekTo(0)
+            play()
+        }
+    }
+
     override fun release() {
         player.release()
         currentItemUrl = null

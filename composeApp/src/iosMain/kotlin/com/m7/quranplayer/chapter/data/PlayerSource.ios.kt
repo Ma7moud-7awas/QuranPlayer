@@ -1,8 +1,8 @@
 package com.m7.quranplayer.chapter.data
 
-import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.player.data.PlayerSource
+import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -185,6 +185,11 @@ class IOSPlayerSource() : PlayerSource {
 
     override fun seekTo(positionMs: Long) {
         player.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
+        player.play()
+    }
+
+    override fun repeat() {
+        seekTo(0)
         player.play()
     }
 
