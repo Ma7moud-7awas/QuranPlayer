@@ -1,6 +1,6 @@
 package com.m7.quranplayer.core.di
 
-import com.m7.quranplayer.chapter.data.AndroidPlayerSource
+import com.m7.quranplayer.player.data.AndroidPlayerSource
 import com.m7.quranplayer.player.data.PlayerSource
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module

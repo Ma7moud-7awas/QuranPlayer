@@ -1,6 +1,6 @@
 package com.m7.quranplayer.core.di
 
-import com.m7.quranplayer.chapter.data.IOSPlayerSource
+import com.m7.quranplayer.player.data.IOSPlayerSource
 import com.m7.quranplayer.player.data.PlayerSource
 import kotlinx.cinterop.BetaInteropApi
 import org.koin.dsl.module
