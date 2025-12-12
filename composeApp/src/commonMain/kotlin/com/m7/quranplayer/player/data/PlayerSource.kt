@@ -15,5 +15,7 @@ interface PlayerSource {
 
     fun seekTo(positionMs: Long)
 
+    fun repeat()
+
     fun release()
 }

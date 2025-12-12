@@ -38,6 +38,10 @@ class PlayerRepoImpl(
         playerSource.seekTo(positionMs)
     }
 
+    override fun repeat() {
+        playerSource.repeat()
+    }
+
     override fun release() {
         playerSource.release()
     }

@@ -13,5 +13,7 @@ sealed interface PlayerAction {
 
     data object Previous : PlayerAction
 
+    data object Repeat : PlayerAction
+
     data class SeekTo(val positionMs: Long) : PlayerAction
 }

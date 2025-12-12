@@ -15,12 +15,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
+import androidx.compose.material.icons.automirrored.rounded.NavigateNext
+import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOn
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.RepeatOneOn
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,6 +35,7 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -38,7 +46,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,6 +124,8 @@ fun Player(
             }
     )
 
+    var isRepeatEnabled by rememberSaveable { mutableStateOf(false) }
+
     // update progress ui state when player state changes
     LaunchedEffect(playerState) {
         Log("playerState effect = $playerState")
@@ -123,7 +135,13 @@ fun Player(
                 playerState.updatedPosition.collectLatest { progressMillis = it }
             }
 
-            PlayerState.Ended -> playerAction(PlayerAction.Next)
+            is PlayerState.Ended -> {
+                if (isRepeatEnabled)
+                    playerAction(PlayerAction.Repeat)
+                else
+                    playerAction(PlayerAction.Next)
+            }
+
             else -> Unit
         }
     }
@@ -203,7 +221,9 @@ fun Player(
                     // passed duration
                     DurationText(
                         progressDuration.toString(),
-                        modifier = Modifier.weight(.3f)
+                        modifier = Modifier
+                            .weight(.3f)
+                            .padding(horizontal = 5.dp)
                     )
 
                     // prev/next controls
@@ -219,12 +239,21 @@ fun Player(
                             Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
                         }
 
+                        // repeat btn
+                        IconToggleButton(
+                            checked = isRepeatEnabled,
+                            onCheckedChange = { isRepeatEnabled = it },
+                            modifier = Modifier.weight(.25f)
+                        ) {
+                            Icon(Icons.Rounded.RepeatOne, "Previous")
+                        }
+
                         // next btn | todo: check if there is a next chapter or disable this btn
                         IconButton(
                             onClick = { playerAction(PlayerAction.Next) },
                             modifier = Modifier.weight(.3f)
                         ) {
-                            Icon(Icons.AutoMirrored.Default.NavigateNext, "Next")
+                            Icon(Icons.AutoMirrored.Rounded.NavigateNext, "Next")
                         }
                     }
 
@@ -232,7 +261,9 @@ fun Player(
                     DurationText(
                         totalDuration.toString(),
                         TextAlign.End,
-                        modifier = Modifier.weight(.25f)
+                        modifier = Modifier
+                            .weight(.25f)
+                            .padding(horizontal = 5.dp)
                     )
                 }
             }
@@ -286,8 +317,9 @@ fun DurationText(duration: String, textAlign: TextAlign? = null, modifier: Modif
     Text(
         duration,
         fontFamily = FontFamily.Cursive,
-        fontSize = 14.sp,
+        autoSize = TextAutoSize.StepBased(12.sp, 16.sp),
         textAlign = textAlign,
+        maxLines = 1,
         modifier = modifier
     )
 }
