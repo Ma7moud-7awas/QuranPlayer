@@ -39,10 +39,10 @@ class IOSPlayerSource() : PlayerSource {
     private var player: AVPlayer
 
     override val playerState: Channel<PlayerState> = Channel(CONFLATED)
-    var currentItemUrl: String? = null
 
-    var playerItemObserver = NSObject()
-    var playerObserver = NSObject()
+    private var currentItemUrl: String? = null
+    private var playerItemObserver = NSObject()
+    private var playerObserver = NSObject()
 
     init {
         AVPlayer.observationEnabled = true
@@ -65,6 +65,7 @@ class IOSPlayerSource() : PlayerSource {
                                 sendErrorState()
                             } else if (isItemTimeCompleted()) {
                                 playerState.trySend(PlayerState.Ended)
+
                             } else {
                                 playerState.trySend(PlayerState.Paused)
                             }
@@ -144,8 +145,11 @@ class IOSPlayerSource() : PlayerSource {
         player.currentItem?.duration()?.toMilliseconds() == player.currentTime().toMilliseconds()
 
     private fun CValue<CMTime>.toMilliseconds(): Long {
-        return (CMTimeGetSeconds(this) * 1000).toLong()
+        return (this.toSeconds() * 1000).toLong()
     }
+
+    private fun CValue<CMTime>.toSeconds(): Double =
+        CMTimeGetSeconds(this)
 
     override fun setItem(url: String) {
         player.currentItem?.removeObserver(playerItemObserver, "status")

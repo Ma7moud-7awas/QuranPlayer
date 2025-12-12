@@ -19,17 +19,21 @@ import kotlinx.coroutines.flow.flow
 
 class AndroidPlayerSource(context: Context) : PlayerSource {
 
-    // handles service communication
+    // handles service communication & session lifecycle
     val controllerFuture: ListenableFuture<MediaController>
     var player: MediaController? = null
 
     override val playerState: Channel<PlayerState> = Channel(CONFLATED)
+
     private var currentItemUrl: String? = null
     private var isCurrentItemEnded = false
     private var playerError: Exception? = null
 
     init {
-        val sessionToken = SessionToken(context, ComponentName(context, PlayerService::class.java))
+        val sessionToken = SessionToken(
+            context,
+            ComponentName(context, PlayerService::class.java)
+        )
         controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         controllerFuture.addListener(
             {

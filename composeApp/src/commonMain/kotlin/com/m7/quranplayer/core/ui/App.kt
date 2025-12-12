@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +26,7 @@ import quranplayer.composeapp.generated.resources.bg_light
 
 @Composable
 @Preview
-fun App() {
+fun App(onStateChange: (PlayerState) -> Unit = {}) {
     QuranPlayerTheme {
         Box(
             modifier = Modifier
@@ -62,6 +63,11 @@ fun App() {
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             )
+
+            // update platform media center with player state
+            LaunchedEffect(playerState) {
+                onStateChange(playerState)
+            }
         }
     }
 }
