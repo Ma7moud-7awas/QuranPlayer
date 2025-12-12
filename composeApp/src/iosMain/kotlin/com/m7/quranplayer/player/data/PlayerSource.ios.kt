@@ -1,7 +1,6 @@
-package com.m7.quranplayer.chapter.data
+package com.m7.quranplayer.player.data
 
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.player.data.PlayerSource
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue

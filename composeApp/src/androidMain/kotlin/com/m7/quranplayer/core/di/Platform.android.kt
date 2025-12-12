@@ -1,12 +1,14 @@
 package com.m7.quranplayer.core.di
 
-import com.m7.quranplayer.chapter.data.AndroidPlayerSource
+import androidx.media3.exoplayer.ExoPlayer
+import com.m7.quranplayer.player.data.AndroidPlayerSource
 import com.m7.quranplayer.player.data.PlayerSource
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.util.Locale
 
 actual val platformModule = module {
+    single<ExoPlayer> {  ExoPlayer.Builder(androidContext()).build() }
     single<PlayerSource> { AndroidPlayerSource(androidContext()) }
 }
 

@@ -234,7 +234,7 @@ fun Player(
                         // prev btn | todo: check if there is a previous chapter or disable this btn
                         IconButton(
                             onClick = { playerAction(PlayerAction.Previous) },
-                            modifier = Modifier.weight(.25f)
+                            modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
                         }
@@ -243,7 +243,7 @@ fun Player(
                         IconToggleButton(
                             checked = isRepeatEnabled,
                             onCheckedChange = { isRepeatEnabled = it },
-                            modifier = Modifier.weight(.25f)
+                            modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Rounded.RepeatOne, "Previous")
                         }
@@ -251,7 +251,7 @@ fun Player(
                         // next btn | todo: check if there is a next chapter or disable this btn
                         IconButton(
                             onClick = { playerAction(PlayerAction.Next) },
-                            modifier = Modifier.weight(.3f)
+                            modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.AutoMirrored.Rounded.NavigateNext, "Next")
                         }
@@ -262,7 +262,7 @@ fun Player(
                         totalDuration.toString(),
                         TextAlign.End,
                         modifier = Modifier
-                            .weight(.25f)
+                            .weight(.3f)
                             .padding(horizontal = 5.dp)
                     )
                 }
