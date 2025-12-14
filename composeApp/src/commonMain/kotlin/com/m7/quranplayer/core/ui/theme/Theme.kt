@@ -16,15 +16,17 @@ import androidx.compose.ui.unit.LayoutDirection
 private val DarkColorScheme = darkColorScheme(
     primary = Green,
     secondary = GreenGrey,
-    tertiary = Pink80,
-    primaryContainer = Color.White,
+    tertiary = Orange,
+    background = LightGreenGrey,
+    primaryContainer = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Green40,
     secondary = GreenGrey40,
-    tertiary = Pink40,
-    primaryContainer = Color.White,
+    tertiary = Orange,
+    background = LightGreenGrey,
+    primaryContainer = Color.White
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

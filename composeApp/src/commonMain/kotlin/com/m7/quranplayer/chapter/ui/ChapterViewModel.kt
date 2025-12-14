@@ -38,7 +38,7 @@ class ChapterViewModel(
             initialValue = PlayerState.Idle
         )
 
-    var selectedChapterIndx by mutableIntStateOf(0)
+    var selectedChapterIndx by mutableIntStateOf(-1)
         private set
 
     fun setSelectedIndex(indx: Int) {

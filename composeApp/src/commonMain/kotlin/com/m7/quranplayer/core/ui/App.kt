@@ -1,44 +1,58 @@
 package com.m7.quranplayer.core.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.chapter.ui.ChapterListScreen
-import com.m7.quranplayer.chapter.ui.ChapterViewModel
-import com.m7.quranplayer.player.domain.model.PlayerState
-import com.m7.quranplayer.player.ui.Player
+import com.m7.quranplayer.core.ui.theme.Green
+import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
+import com.m7.quranplayer.player.domain.model.PlayerState
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App(onStateChange: (PlayerState) -> Unit = {}) {
     QuranPlayerTheme {
-        Box(
-            modifier = Modifier
-                .safeContentPadding()
-                .fillMaxSize(),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            val chapterViewModel: ChapterViewModel = koinViewModel()
+        val listState = rememberLazyListState()
+        val coroutineScope = rememberCoroutineScope()
+        var selectedIndex by remember { mutableIntStateOf(-1) }
+        val isPlayingItemInvisible by remember {
+            derivedStateOf {
+                selectedIndex > -1 && !isItemVisible(selectedIndex, listState)
+            }
+        }
 
-            val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
-            val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
-
+        Scaffold(floatingActionButton = {
+            // scroll to the playing item
+            if (isPlayingItemInvisible)
+                ScrollButton {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(selectedIndex)
+                    }
+                }
+        }) { innerPadding ->
             // background
             Image(
                 painterResource(Res.drawable.bg_light),
@@ -49,25 +63,42 @@ fun App(onStateChange: (PlayerState) -> Unit = {}) {
 
             // list
             ChapterListScreen(
-                chapters,
-                isPlaying = playerState is PlayerState.Playing,
-                selectedChapterIndx = chapterViewModel.selectedChapterIndx,
-                onChapterSelected = chapterViewModel::setSelectedIndex
-            )
-
-            // player
-            Player(
-                playerState = playerState,
-                playerAction = chapterViewModel::playerAction,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
+                listState,
+                onSelectedItemChanged = {
+                    selectedIndex = it
+                }
             )
 
             // update platform media center with player state
-            LaunchedEffect(playerState) {
-                onStateChange(playerState)
-            }
+//            LaunchedEffect(playerState) {
+//                onStateChange(playerState)
+//            }
         }
+    }
+}
+
+fun isItemVisible(itemIndex: Int, listState: LazyListState): Boolean {
+    return listState.layoutInfo.let {
+        val padding = 50
+
+        it.visibleItemsInfo
+            .filter { itemInfo ->
+                itemInfo.offset + padding >= it.viewportStartOffset &&
+                        itemInfo.offset - padding + itemInfo.size <= it.viewportEndOffset
+            }
+            .map { it.index - 1 }
+            .any { it == itemIndex }
+    }
+}
+
+@Composable
+@Preview
+fun ScrollButton(onClick: () -> Unit = {}) {
+    FloatingActionButton(
+        containerColor = Orange,
+        contentColor = Green,
+        onClick = onClick,
+    ) {
+        Icon(Icons.Rounded.PlayArrow, null)
     }
 }

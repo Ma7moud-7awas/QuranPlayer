@@ -245,7 +245,7 @@ fun Player(
                             onCheckedChange = { isRepeatEnabled = it },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Rounded.RepeatOne, "Previous")
+                            Icon(Icons.Rounded.RepeatOne, "Repeat")
                         }
 
                         // next btn | todo: check if there is a next chapter or disable this btn
@@ -296,18 +296,18 @@ fun ProgressSlider(
                 ) {
                     SliderDefaults.Thumb(
                         interactionSource = interactionSource,
-                        thumbSize = DpSize(10.dp, 10.dp),
+                        thumbSize = DpSize(12.dp, 12.dp),
                     )
                 }
             },
             track = { sliderState ->
                 SliderDefaults.Track(
                     sliderState = sliderState,
-                    modifier = Modifier.height(5.dp),
+                    modifier = Modifier.height(7.dp),
                     thumbTrackGapSize = .5.dp
                 )
             },
-            modifier = modifier.height(15.dp)
+            modifier = modifier.height(20.dp)
         )
     }
 }
@@ -317,7 +317,7 @@ fun DurationText(duration: String, textAlign: TextAlign? = null, modifier: Modif
     Text(
         duration,
         fontFamily = FontFamily.Cursive,
-        autoSize = TextAutoSize.StepBased(12.sp, 16.sp),
+        fontSize = 10.sp,
         textAlign = textAlign,
         maxLines = 1,
         modifier = modifier

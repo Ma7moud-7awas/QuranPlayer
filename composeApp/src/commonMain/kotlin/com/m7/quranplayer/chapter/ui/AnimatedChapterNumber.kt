@@ -32,11 +32,11 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun AnimatedChapterNumber(
-    isSelected: Boolean = false,
+    isPlaying: Boolean = false,
     chapterNum: String,
     modifier: Modifier = Modifier
 ) {
-    val playingTransition = updateTransition(isSelected, "Select State")
+    val playingTransition = updateTransition(isPlaying, "Select State")
 
     val selectColor by playingTransition.animateColor(label = "Color") { isPlaying ->
         if (isPlaying) Green else Orange
