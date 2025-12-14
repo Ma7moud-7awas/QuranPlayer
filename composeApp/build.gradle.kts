@@ -73,6 +73,7 @@ kotlin {
                     implementation(androidx.media3.exoplayer)
                     implementation(androidx.media3.session)
                     implementation(androidx.media3.ui)
+                    implementation(androidx.media3.workmanager)
                     implementation(ktor.okhttp)
                     implementation(koin.android)
                 }
