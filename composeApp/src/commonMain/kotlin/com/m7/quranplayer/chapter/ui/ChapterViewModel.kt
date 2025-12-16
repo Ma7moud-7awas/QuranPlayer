@@ -1,50 +1,80 @@
 package com.m7.quranplayer.chapter.ui
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
 import com.m7.quranplayer.chapter.domain.model.Chapter
-import com.m7.quranplayer.player.domain.repo.PlayerRepo
+import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
+import com.m7.quranplayer.downloader.domain.model.DownloaderAction
+import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
+import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.List
+import kotlin.collections.emptyList
+import kotlin.collections.lastIndex
+import kotlin.collections.map
 
 class ChapterViewModel(
     private val chapterRepo: ChapterRepo,
     private val playerRepo: PlayerRepo,
+    private val downloaderRepo: DownloaderRepo,
 ) : ViewModel() {
 
+    // chapters
     val chapters: StateFlow<List<Chapter>>
         field = MutableStateFlow(emptyList())
 
     init {
         viewModelScope.launch {
-            chapters.update { chapterRepo.getChapters() }
+            chapters.update {
+                chapterRepo.getChapters { downloaderRepo.getDownloadState(it) }
+            }
+
+            downloaderRepo.downloadState.collect { (downloadId, state) ->
+                chapters.update {
+                    it.map { chapter ->
+                        if (chapter.id == downloadId) {
+                            chapter.copy(downloadState = state)
+                        } else {
+                            chapter
+                        }
+                    }
+                }
+            }
         }
     }
 
+    var selectedChapterIndx by mutableIntStateOf(-1)
+        private set
+
+    fun setSelectedIndex(indx: Int) {
+        // pause the same chapter or play the new one.
+        if (indx == selectedChapterIndx && playerState.value is PlayerState.Playing) {
+            playerAction(PlayerAction.Pause)
+        } else {
+            selectedChapterIndx = indx
+            playerAction(PlayerAction.Play)
+        }
+    }
+
+    // player
     val playerState: StateFlow<PlayerState> = playerRepo.playerState
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = PlayerState.Idle
         )
-
-    var selectedChapterIndx by mutableIntStateOf(-1)
-        private set
-
-    fun setSelectedIndex(indx: Int) {
-        selectedChapterIndx = indx
-        playerAction(PlayerAction.Play)
-    }
 
     fun playerAction(action: PlayerAction) {
         when (action) {
@@ -59,7 +89,7 @@ class ChapterViewModel(
 
     private fun play() {
         if (selectedChapterIndx == -1) {
-            // todo: play last cashed chapter
+            // todo: play last cashed chapter, or scroll to the bookmarked chapter
             selectedChapterIndx++
         }
         playerRepo.play(chapters.value[selectedChapterIndx].id)
@@ -76,6 +106,14 @@ class ChapterViewModel(
         if (selectedChapterIndx > 0) {
             selectedChapterIndx--
             playerRepo.play(chapters.value[selectedChapterIndx].id)
+        }
+    }
+
+    fun downloaderAction(id: String, action: DownloaderAction) {
+        when (action) {
+            is DownloaderAction.Start -> downloaderRepo.start(id)
+            is DownloaderAction.Pause -> downloaderRepo.pause(id)
+            is DownloaderAction.Stop -> downloaderRepo.stop(id)
         }
     }
 

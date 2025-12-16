@@ -1,8 +1,8 @@
 package com.m7.quranplayer.player.domain.model
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 
-@Stable
+@Immutable
 sealed interface PlayerAction {
 
     data object Play : PlayerAction
@@ -15,5 +15,6 @@ sealed interface PlayerAction {
 
     data object Repeat : PlayerAction
 
+    @Immutable
     data class SeekTo(val positionMs: Long) : PlayerAction
 }
