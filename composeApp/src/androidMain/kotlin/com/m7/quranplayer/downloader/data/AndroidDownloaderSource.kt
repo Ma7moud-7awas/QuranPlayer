@@ -27,6 +27,10 @@ class AndroidDownloaderSource(
     override val downloadState: Channel<Pair<String, DownloadState>> = Channel(CONFLATED)
 
     init {
+        // check and resume queued downloads.
+        DownloadService.start(context, DownloaderService::class.java)
+
+        // track current downloads states.
         downloadUtil.getDownloadManager().addListener(
             object : androidx.media3.exoplayer.offline.DownloadManager.Listener {
                 override fun onDownloadChanged(
@@ -37,7 +41,7 @@ class AndroidDownloaderSource(
                     Log("download.state = ${download.state}")
                     with(download) {
                         downloadState.trySend(
-                            request.id to getDownloaderState(request.id)
+                            request.id to this.getDownloadState(request.id)
                         )
                     }
                 }
@@ -46,10 +50,10 @@ class AndroidDownloaderSource(
     }
 
     override fun getDownloadState(id: String): DownloadState {
-        return downloadUtil.getDownload(id)?.getDownloaderState(id) ?: DownloadState.NotDownloaded
+        return downloadUtil.getDownload(id)?.getDownloadState(id) ?: DownloadState.NotDownloaded
     }
 
-    private fun Download.getDownloaderState(id: String): DownloadState {
+    private fun Download.getDownloadState(id: String): DownloadState {
         Log("download: id = $id - state = $state")
         return when (this.state) {
             Download.STATE_QUEUED -> DownloadState.Queued

@@ -2,6 +2,7 @@
     <string name="chapters">السور</string>
     <string name="chapter_is_available_offline">السورة متاحة بدون انترنت</string>
     <string name="chapter_added_to_queue">تم اضافة السورة لقائمة التحميل</string>
+    <string name="could_not_download_chapter">لا يمكن تحميل السورة، حاول في وقت لاحق</string>
     <string name="download_chapter_to_play_offline">حمل السورة لتشغيلها بدون انترنت</string>
 
     <string name="chapter_number">سورة رقم %1$s</string>

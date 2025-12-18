@@ -8,7 +8,7 @@ import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.allStringResources
 import quranplayer.composeapp.generated.resources.chapter_number
 
-data class Chapter constructor(
+data class Chapter(
     // used as a path to the audio file in the request
     val id: String,
     // localized representation of the id as chapter number
@@ -16,36 +16,16 @@ data class Chapter constructor(
     // used to retrieve localized chapter title from resources
     val titleRes: StringResource = Res.allStringResources["_${id}"] ?: Res.string.chapter_number,
 
-    var downloadState: DownloadState
+    var downloadState: DownloadState = DownloadState.NotDownloaded
 ) {
 
     companion object Builder {
-        var intId: Int = 0
-            set(value) {
-                field = value
-                id = value.format("%03d")
-                number = value.localize()
-            }
-
-        var id: String = ""
-        var number: String = ""
-        var downloadState: DownloadState = DownloadState.NotDownloaded
-
-        fun setId(id: Int): Builder {
-            this.intId = id
-            return Builder
-        }
-
-        fun setDownloadState(downloadState: (String) -> DownloadState): Builder {
-            this.downloadState = downloadState(id)
-            return Builder
-        }
-
-        fun build(): Chapter {
+        fun build(id: Int, downloadState: (String) -> DownloadState): Chapter {
+            val mId = id.format("%03d")
             return Chapter(
-                id = id,
-                number = number,
-                downloadState = downloadState
+                id = mId,
+                number = id.localize(),
+                downloadState = downloadState(mId)
             )
         }
     }

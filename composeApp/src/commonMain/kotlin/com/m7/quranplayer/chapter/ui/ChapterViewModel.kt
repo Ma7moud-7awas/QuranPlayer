@@ -2,6 +2,7 @@ package com.m7.quranplayer.chapter.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,15 +16,10 @@ import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.Int
-import kotlin.String
-import kotlin.collections.List
-import kotlin.collections.emptyList
-import kotlin.collections.lastIndex
-import kotlin.collections.map
 
 class ChapterViewModel(
     private val chapterRepo: ChapterRepo,
@@ -31,7 +27,6 @@ class ChapterViewModel(
     private val downloaderRepo: DownloaderRepo,
 ) : ViewModel() {
 
-    // chapters
     val chapters: StateFlow<List<Chapter>>
         field = MutableStateFlow(emptyList())
 
@@ -40,7 +35,9 @@ class ChapterViewModel(
             chapters.update {
                 chapterRepo.getChapters { downloaderRepo.getDownloadState(it) }
             }
+        }
 
+        viewModelScope.launch {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
                 chapters.update {
                     it.map { chapter ->
@@ -70,11 +67,26 @@ class ChapterViewModel(
 
     // player
     val playerState: StateFlow<PlayerState> = playerRepo.playerState
+        .onEach {
+            if (it is PlayerState.Ended)
+                if (isRepeatEnabled) {
+                    playerAction(PlayerAction.Repeat)
+                } else {
+                    playerAction(PlayerAction.Next)
+                }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = PlayerState.Idle
         )
+
+    var isRepeatEnabled by mutableStateOf(false)
+        private set
+
+    fun onRepeatClicked(enabled: Boolean) {
+        isRepeatEnabled = enabled
+    }
 
     fun playerAction(action: PlayerAction) {
         when (action) {

@@ -11,7 +11,7 @@ class ChaptersRepoImpl : ChapterRepo {
         val chaptersList by lazy {
             buildList {
                 for (i in 1..12) {
-                    add(Chapter.setId(i).build())
+                    add(Chapter.build(i) { DownloadState.NotDownloaded })
                 }
             }
         }
@@ -21,10 +21,7 @@ class ChaptersRepoImpl : ChapterRepo {
         val chaptersList = buildList {
             for (i in 1..114) {
                 add(
-                    Chapter
-                        .setId(i)
-                        .setDownloadState(downloadState)
-                        .build()
+                    Chapter.build(i, downloadState)
                 )
             }
         }

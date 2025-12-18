@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.LineWeight
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.Stop
@@ -46,8 +47,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.chapter_added_to_queue
-import quranplayer.composeapp.generated.resources.download_chapter_to_play_offline
 import quranplayer.composeapp.generated.resources.chapter_is_available_offline
+import quranplayer.composeapp.generated.resources.could_not_download_chapter
+import quranplayer.composeapp.generated.resources.download_chapter_to_play_offline
 
 @Composable
 @Preview(showBackground = true)
@@ -72,11 +74,22 @@ private fun DownloadStack_Queued() {
 }
 
 @Composable
-@Preview(showBackground = true)
-private fun DownloadStack_Downloading() {
+@Preview(showBackground = true, locale = "ar")
+private fun DownloadStack_Error() {
     DownloadStack(
         chaptersList.first()
-            .also { it.downloadState = DownloadState.Downloading(flowOf(.5f)) },
+            .also { it.downloadState = DownloadState.Error(Exception()) },
+        expanded = true,
+        downloaderAction = { _, _ -> }
+    )
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun DownloadStack_Completed() {
+    DownloadStack(
+        chaptersList.first()
+            .also { it.downloadState = DownloadState.Completed },
         expanded = true,
         downloaderAction = { _, _ -> }
     )
@@ -95,10 +108,10 @@ private fun DownloadStack_Paused() {
 
 @Composable
 @Preview(showBackground = true)
-private fun DownloadStack_Completed() {
+private fun DownloadStack_Downloading() {
     DownloadStack(
         chaptersList.first()
-            .also { it.downloadState = DownloadState.Completed },
+            .also { it.downloadState = DownloadState.Downloading(flowOf(.5f)) },
         expanded = true,
         downloaderAction = { _, _ -> }
     )
@@ -123,6 +136,7 @@ fun DownloadStack(
         val hintStringRes = when (chapter.downloadState) {
             is DownloadState.Completed -> Res.string.chapter_is_available_offline
             is DownloadState.Queued -> Res.string.chapter_added_to_queue
+            is DownloadState.Error -> Res.string.could_not_download_chapter
             else -> Res.string.download_chapter_to_play_offline
         }
 
@@ -130,21 +144,16 @@ fun DownloadStack(
             is DownloadState.Completed -> Icons.Rounded.DownloadDone
             is DownloadState.Queued -> Icons.Rounded.LineWeight
             is DownloadState.Downloading -> Icons.Rounded.Pause
+            is DownloadState.Error -> Icons.Rounded.Error
             else -> Icons.Rounded.Download
         }
 
         LaunchedEffect(chapter.downloadState) {
             Log("chapter effect= ${chapter.downloadState}")
-            if (expanded) {
-                chapter.downloadState.also {
-                    when (it) {
-                        is DownloadState.Downloading -> {
-                            // update progress
-                            it.updatedPosition.collectLatest { progress = it }
-                        }
-
-                        else -> Unit
-                    }
+            chapter.downloadState.also { state ->
+                if (expanded && state is DownloadState.Downloading) {
+                    // update progress
+                    state.updatedPosition.collectLatest { progress = it }
                 }
             }
         }
@@ -158,7 +167,9 @@ fun DownloadStack(
                 when (chapter.downloadState) {
                     is DownloadState.NotDownloaded,
                     is DownloadState.Queued,
+                    is DownloadState.Error,
                     is DownloadState.Completed -> {
+                        // hint
                         Text(
                             text = stringResource(hintStringRes),
                             fontSize = 12.sp,
@@ -197,11 +208,10 @@ fun DownloadStack(
                     modifier = Modifier.weight(1f, fill = false),
                     onClick = {
                         when (chapter.downloadState) {
+                            is DownloadState.Completed -> Unit
+
                             is DownloadState.Downloading ->
                                 downloaderAction(chapter.id, DownloaderAction.Pause)
-
-                            is DownloadState.Queued,
-                            is DownloadState.Completed -> Unit
 
                             else -> downloaderAction(chapter.id, DownloaderAction.Start)
                         }
