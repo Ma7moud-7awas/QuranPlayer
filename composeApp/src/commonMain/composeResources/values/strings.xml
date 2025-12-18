@@ -1,5 +1,9 @@
 <resources>
     <string name="chapters">Chapters</string>
+    <string name="chapter_is_available_offline">Chapter is available offline</string>
+    <string name="chapter_added_to_queue">Chapter added to Download Queue</string>
+    <string name="download_chapter_to_play_offline">Downloaded chapter to play offline</string>
+
     <string name="chapter_number">chapter number %1$s</string>
     <string name="_001">Al Fateha</string>
     <string name="_002">Al Bakara</string>

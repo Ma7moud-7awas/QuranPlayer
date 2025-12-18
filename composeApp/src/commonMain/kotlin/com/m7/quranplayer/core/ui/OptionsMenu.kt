@@ -1,4 +1,4 @@
-package com.m7.quranplayer.chapter.ui.options
+package com.m7.quranplayer.core.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +17,13 @@ fun OptionsStack(
     options: @Composable ColumnScope.() -> Unit
 ) {
     AnimatedVisibility(expanded) {
-        if (expanded)
-            Column(
-                modifier = modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start
+        ) {
+            if (expanded)
                 options()
-            }
+        }
     }
 }
 

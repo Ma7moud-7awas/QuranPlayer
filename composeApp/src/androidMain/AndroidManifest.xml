@@ -26,7 +26,7 @@
         </activity>
 
         <service
-            android:name=".player.PlayerSessionService"
+            android:name=".player.PlayerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
@@ -35,7 +35,7 @@
             </intent-filter>
         </service>
 
-        <service android:name=".player.PlayerDownloadService"
+        <service android:name=".downloader.DownloaderService"
             android:exported="false"
             android:foregroundServiceType="dataSync">
             <!-- This is needed for Scheduler -->

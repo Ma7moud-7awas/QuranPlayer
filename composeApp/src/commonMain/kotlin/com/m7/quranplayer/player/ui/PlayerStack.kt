@@ -1,4 +1,4 @@
-package com.m7.quranplayer.chapter.ui.options
+package com.m7.quranplayer.player.ui
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
@@ -34,17 +34,16 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.m7.quranplayer.core.ui.OptionsRow
+import com.m7.quranplayer.core.ui.OptionsStack
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
-import com.m7.quranplayer.player.ui.DurationText
-import com.m7.quranplayer.player.ui.ProgressSlider
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
-
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

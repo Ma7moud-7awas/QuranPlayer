@@ -10,7 +10,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.player.PlayerSessionService
+import com.m7.quranplayer.player.PlayerService
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
@@ -36,7 +36,7 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
     private fun initController() {
         val sessionToken = SessionToken(
             context,
-            ComponentName(context, PlayerSessionService::class.java)
+            ComponentName(context, PlayerService::class.java)
         )
         controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         controllerFuture.addListener(
@@ -49,11 +49,10 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
     }
 
     private fun getPlayer(): MediaController {
-        return player
-            ?: controllerFuture.get()
-                .also {
-                    player = it
-                }
+        return player ?: controllerFuture.get()
+            .also {
+                player = it
+            }
     }
 
     private fun observePlayerUpdates() {

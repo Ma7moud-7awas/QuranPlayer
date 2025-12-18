@@ -49,7 +49,7 @@ fun App(onStateChange: (PlayerState) -> Unit = {}) {
             if (isPlayingItemInvisible)
                 ScrollButton {
                     coroutineScope.launch {
-                        listState.animateScrollToItem(selectedIndex)
+                        listState.animateScrollToItem(selectedIndex + 1)
                     }
                 }
         }) { innerPadding ->
