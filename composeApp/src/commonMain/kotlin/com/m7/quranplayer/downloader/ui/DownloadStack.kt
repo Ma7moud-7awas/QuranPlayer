@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.LineWeight
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.Recycling
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -141,7 +143,7 @@ fun DownloadStack(
         }
 
         val startIcon = when (chapter.downloadState) {
-            is DownloadState.Completed -> Icons.Rounded.DownloadDone
+            is DownloadState.Completed -> Icons.Rounded.Delete
             is DownloadState.Queued -> Icons.Rounded.LineWeight
             is DownloadState.Downloading -> Icons.Rounded.Pause
             is DownloadState.Error -> Icons.Rounded.Error
@@ -208,7 +210,8 @@ fun DownloadStack(
                     modifier = Modifier.weight(1f, fill = false),
                     onClick = {
                         when (chapter.downloadState) {
-                            is DownloadState.Completed -> Unit
+                            is DownloadState.Completed ->
+                                downloaderAction(chapter.id, DownloaderAction.Stop)
 
                             is DownloadState.Downloading ->
                                 downloaderAction(chapter.id, DownloaderAction.Pause)

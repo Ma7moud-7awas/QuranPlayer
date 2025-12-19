@@ -2,11 +2,16 @@ package com.m7.quranplayer.player.data
 
 import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import com.m7.quranplayer.player.domain.model.PlayerState
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.withContext
 
 class PlayerRepoImpl(
-    private val playerSource: PlayerSource
+    private val playerSource: PlayerSource,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : PlayerRepo {
 
     private companion object {
@@ -22,27 +27,39 @@ class PlayerRepoImpl(
     override val playerState: Flow<PlayerState> =
         playerSource.playerState.receiveAsFlow()
 
-    override fun setItem(id: String) {
-        playerSource.setItem(mapIdToUrl(id))
+    override suspend fun setItem(id: String) {
+        withContext(dispatcher) {
+            playerSource.setItem(mapIdToUrl(id))
+        }
     }
 
-    override fun play(id: String) {
-        playerSource.play(mapIdToUrl(id))
+    override suspend fun play(id: String) {
+        withContext(dispatcher) {
+            playerSource.play(mapIdToUrl(id))
+        }
     }
 
-    override fun pause() {
-        playerSource.pause()
+    override suspend fun pause() {
+        withContext(dispatcher) {
+            playerSource.pause()
+        }
     }
 
-    override fun seekTo(positionMs: Long) {
-        playerSource.seekTo(positionMs)
+    override suspend fun seekTo(positionMs: Long) {
+        withContext(dispatcher) {
+            playerSource.seekTo(positionMs)
+        }
     }
 
-    override fun repeat() {
-        playerSource.repeat()
+    override suspend fun repeat() {
+        withContext(dispatcher) {
+            playerSource.repeat()
+        }
     }
 
-    override fun release() {
-        playerSource.release()
+    override suspend fun release() {
+        withContext(dispatcher) {
+            playerSource.release()
+        }
     }
 }

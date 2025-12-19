@@ -20,12 +20,10 @@ data class Chapter(
 ) {
 
     companion object Builder {
-        fun build(id: Int, downloadState: (String) -> DownloadState): Chapter {
-            val mId = id.format("%03d")
+        fun build(id: Int): Chapter {
             return Chapter(
-                id = mId,
-                number = id.localize(),
-                downloadState = downloadState(mId)
+                id = id.format("%03d"),
+                number = id.localize()
             )
         }
     }

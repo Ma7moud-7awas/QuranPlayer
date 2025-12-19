@@ -7,15 +7,15 @@ interface PlayerRepo {
 
     val playerState: Flow<PlayerState>
 
-    fun setItem(id: String)
+    suspend fun setItem(id: String)
 
-    fun play(id: String)
+    suspend fun play(id: String)
 
-    fun pause()
+    suspend fun pause()
 
-    fun seekTo(positionMs: Long)
+    suspend fun seekTo(positionMs: Long)
 
-    fun repeat()
+    suspend fun repeat()
 
-    fun release()
+    suspend fun release()
 }

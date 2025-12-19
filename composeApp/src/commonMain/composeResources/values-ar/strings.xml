@@ -1,5 +1,10 @@
 <resources>
     <string name="chapters">السور</string>
+
+    <string name="language">اللغة</string>
+
+    <string name="downloads">التنزيلات</string>
+    <string name="download_all_chapters">تنزيل جميع السور</string>
     <string name="chapter_is_available_offline">السورة متاحة بدون انترنت</string>
     <string name="chapter_added_to_queue">تم اضافة السورة لقائمة التحميل</string>
     <string name="could_not_download_chapter">لا يمكن تحميل السورة، حاول في وقت لاحق</string>

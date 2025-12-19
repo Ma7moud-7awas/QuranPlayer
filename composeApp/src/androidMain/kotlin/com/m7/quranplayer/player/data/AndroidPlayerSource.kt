@@ -115,12 +115,12 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
         })
     }
 
-    override fun setItem(url: String) {
+    override suspend fun setItem(url: String) {
         currentItemUrl = url
         getPlayer().setMediaItem(MediaItem.fromUri(url))
     }
 
-    override fun play(url: String) {
+    override suspend fun play(url: String) {
         getPlayer().apply {
             playerError?.also {
                 // reset the player if there is an error to start over
@@ -139,22 +139,22 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
         }
     }
 
-    override fun pause() {
+    override suspend fun pause() {
         getPlayer().pause()
     }
 
-    override fun seekTo(positionMs: Long) {
+    override suspend fun seekTo(positionMs: Long) {
         getPlayer().seekTo(positionMs)
     }
 
-    override fun repeat() {
+    override suspend fun repeat() {
         getPlayer().apply {
             seekTo(0)
             play()
         }
     }
 
-    override fun release() {
+    override suspend fun release() {
         getPlayer().release()
         player = null
         playerError = null

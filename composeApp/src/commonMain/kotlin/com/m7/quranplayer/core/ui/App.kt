@@ -66,7 +66,7 @@ fun App(onStateChange: (PlayerState) -> Unit = {}) {
                 listState,
                 onSelectedItemChanged = {
                     selectedIndex = it
-                }
+                },
             )
 
             // update platform media center with player state

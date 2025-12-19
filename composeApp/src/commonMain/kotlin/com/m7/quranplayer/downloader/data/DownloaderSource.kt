@@ -7,11 +7,13 @@ interface DownloaderSource {
 
     val downloadState: Channel<Pair<String, DownloadState>>
 
-    fun getDownloadState(id: String): DownloadState
+    suspend fun getDownloadState(id: String): DownloadState
 
-    fun start(id: String, url: String)
+    suspend fun getDownloadedCount(): Int
 
-    fun pause(id: String)
+    suspend fun start(id: String, url: String)
 
-    fun stop(id: String)
+    suspend fun pause(id: String)
+
+    suspend fun stop(id: String)
 }

@@ -13,6 +13,7 @@ import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.domain.repo.PlayerRepo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,14 +31,21 @@ class ChapterViewModel(
     val chapters: StateFlow<List<Chapter>>
         field = MutableStateFlow(emptyList())
 
+    var downloadedChaptersCount by mutableIntStateOf(0)
+        private set
+
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             chapters.update {
-                chapterRepo.getChapters { downloaderRepo.getDownloadState(it) }
+                chapterRepo.getChapters().map { chapter ->
+                    chapter.copy(downloadState = downloaderRepo.getDownloadState(chapter.id))
+                }
             }
+
+            updateDownloadedCount()
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
                 chapters.update {
                     it.map { chapter ->
@@ -48,7 +56,15 @@ class ChapterViewModel(
                         }
                     }
                 }
+
+                updateDownloadedCount()
             }
+        }
+    }
+
+    private fun updateDownloadedCount() {
+        viewModelScope.launch {
+            downloadedChaptersCount = downloaderRepo.getDownloadedCount()
         }
     }
 
@@ -89,48 +105,60 @@ class ChapterViewModel(
     }
 
     fun playerAction(action: PlayerAction) {
-        when (action) {
-            PlayerAction.Pause -> playerRepo.pause()
-            is PlayerAction.Play -> play()
-            is PlayerAction.Next -> next()
-            is PlayerAction.Previous -> previous()
-            is PlayerAction.Repeat -> playerRepo.repeat()
-            is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
+        viewModelScope.launch {
+            when (action) {
+                PlayerAction.Pause -> playerRepo.pause()
+                is PlayerAction.Play -> play()
+                is PlayerAction.Next -> next()
+                is PlayerAction.Previous -> previous()
+                is PlayerAction.Repeat -> playerRepo.repeat()
+                is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
+            }
         }
     }
 
     private fun play() {
-        if (selectedChapterIndx == -1) {
-            // todo: play last cashed chapter, or scroll to the bookmarked chapter
-            selectedChapterIndx++
+        viewModelScope.launch {
+            if (selectedChapterIndx == -1) {
+                // todo: play last cashed chapter, or scroll to the bookmarked chapter
+                selectedChapterIndx++
+            }
+            playerRepo.play(chapters.value[selectedChapterIndx].id)
         }
-        playerRepo.play(chapters.value[selectedChapterIndx].id)
     }
 
     private fun next() {
-        if (selectedChapterIndx < chapters.value.lastIndex) {
-            selectedChapterIndx++
-            playerRepo.play(chapters.value[selectedChapterIndx].id)
+        viewModelScope.launch {
+            if (selectedChapterIndx < chapters.value.lastIndex) {
+                selectedChapterIndx++
+                playerRepo.play(chapters.value[selectedChapterIndx].id)
+            }
         }
     }
 
     private fun previous() {
-        if (selectedChapterIndx > 0) {
-            selectedChapterIndx--
-            playerRepo.play(chapters.value[selectedChapterIndx].id)
+        viewModelScope.launch {
+            if (selectedChapterIndx > 0) {
+                selectedChapterIndx--
+                playerRepo.play(chapters.value[selectedChapterIndx].id)
+            }
         }
     }
 
     fun downloaderAction(id: String, action: DownloaderAction) {
-        when (action) {
-            is DownloaderAction.Start -> downloaderRepo.start(id)
-            is DownloaderAction.Pause -> downloaderRepo.pause(id)
-            is DownloaderAction.Stop -> downloaderRepo.stop(id)
+        viewModelScope.launch {
+            when (action) {
+                is DownloaderAction.Start -> downloaderRepo.start(id)
+                is DownloaderAction.Pause -> downloaderRepo.pause(id)
+                is DownloaderAction.Stop -> downloaderRepo.stop(id)
+            }
         }
     }
 
     override fun onCleared() {
-        playerRepo.release()
+        viewModelScope.launch {
+            playerRepo.release()
+        }
         super.onCleared()
     }
 }

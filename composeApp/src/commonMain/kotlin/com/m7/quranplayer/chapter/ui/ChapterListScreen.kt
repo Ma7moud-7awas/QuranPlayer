@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -35,17 +34,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.chapter.data.ChaptersRepoImpl.Companion.chaptersList
 import com.m7.quranplayer.chapter.domain.model.Chapter
-import com.m7.quranplayer.core.ui.theme.GreenGrey
 import com.m7.quranplayer.core.ui.theme.LightGray
-import com.m7.quranplayer.core.ui.theme.LightGreenGrey
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
 import com.m7.quranplayer.downloader.domain.model.DownloadState
@@ -89,19 +84,7 @@ fun ChapterListScreen(
         state = listState
     ) {
         item(key = Res.string.chapters.key) {
-            // todo: add search, download all, language
-            Text(
-                stringResource(Res.string.chapters),
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                color = GreenGrey,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(LightGreenGrey)
-                    .padding(16.dp)
-            )
+            ChaptersToolbar(chapterViewModel.downloadedChaptersCount)
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->

@@ -7,15 +7,15 @@ interface PlayerSource {
 
     val playerState: Channel<PlayerState>
 
-    fun setItem(url: String)
+    suspend fun setItem(url: String)
 
-    fun play(url: String)
+    suspend fun play(url: String)
 
-    fun pause()
+    suspend fun pause()
 
-    fun seekTo(positionMs: Long)
+    suspend fun seekTo(positionMs: Long)
 
-    fun repeat()
+    suspend fun repeat()
 
-    fun release()
+    suspend fun release()
 }
