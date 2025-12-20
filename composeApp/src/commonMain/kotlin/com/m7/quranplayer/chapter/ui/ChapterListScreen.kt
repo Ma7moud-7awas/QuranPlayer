@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m7.quranplayer.chapter.data.ChaptersRepoImpl.Companion.chaptersList
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.core.ui.theme.LightGray
 import com.m7.quranplayer.core.ui.theme.Orange
@@ -49,11 +48,15 @@ import com.m7.quranplayer.downloader.ui.DownloadStack
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.ui.PlayerStack
-import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.chapters
+
+val chaptersFakeList = buildList {
+    for (i in 1..10)
+        add(Chapter("$i", "$i", "title $i"))
+}
 
 @Composable
 //@Preview(showBackground = true, locale = "ar")
@@ -74,6 +77,8 @@ fun ChapterListScreen(
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
+    var searchExpanded by remember { mutableStateOf(false) }
+
     LaunchedEffect(chapterViewModel.selectedChapterIndx) {
         onSelectedItemChanged(chapterViewModel.selectedChapterIndx)
     }
@@ -84,7 +89,12 @@ fun ChapterListScreen(
         state = listState
     ) {
         item(key = Res.string.chapters.key) {
-            ChaptersToolbar(chapterViewModel.downloadedChaptersCount)
+            ChaptersToolbar(
+                chapterViewModel.downloadedChaptersCount,
+                searchExpanded,
+                onExpandSearch = { searchExpanded = it },
+                onSearch = chapterViewModel::search
+            )
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->
@@ -107,7 +117,7 @@ fun ChapterListScreen(
 private fun ChapterItemPreview() {
     QuranPlayerTheme {
         ChapterItem(
-            chapter = chaptersList.first().copy(downloadState = DownloadState.NotDownloaded),
+            chapter = chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded),
             isSelected = true,
             playerState = PlayerState.Idle,
             playerAction = {},
@@ -193,13 +203,14 @@ fun ChapterCard(
 
             // title
             Text(
-                text = stringResource(chapter.titleRes, chapter.number),
+                text = chapter.title,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp).weight(1f)
             )
 
+            // v separator
             Spacer(Modifier.height(30.dp).width(.5.dp).background(LightGray))
 
             // download menu toggle

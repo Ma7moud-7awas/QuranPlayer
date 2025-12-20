@@ -34,8 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m7.quranplayer.chapter.data.ChaptersRepoImpl.Companion.chaptersList
 import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.chapter.ui.chaptersFakeList
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.ui.OptionsRow
 import com.m7.quranplayer.core.ui.OptionsStack
@@ -55,8 +55,7 @@ import quranplayer.composeapp.generated.resources.download_chapter_to_play_offli
 @Preview(showBackground = true)
 private fun DownloadStack_NotDownloaded() {
     DownloadStack(
-        chaptersList.first()
-            .also { it.downloadState = DownloadState.NotDownloaded },
+        chaptersFakeList.first(),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
@@ -66,7 +65,7 @@ private fun DownloadStack_NotDownloaded() {
 @Preview(showBackground = true)
 private fun DownloadStack_Queued() {
     DownloadStack(
-        chaptersList.first()
+        chaptersFakeList.first()
             .also { it.downloadState = DownloadState.Queued },
         expanded = true,
         downloaderAction = { _, _ -> }
@@ -77,7 +76,7 @@ private fun DownloadStack_Queued() {
 @Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Error() {
     DownloadStack(
-        chaptersList.first()
+        chaptersFakeList.first()
             .also { it.downloadState = DownloadState.Error(Exception()) },
         expanded = true,
         downloaderAction = { _, _ -> }
@@ -88,7 +87,7 @@ private fun DownloadStack_Error() {
 @Preview(showBackground = true)
 private fun DownloadStack_Completed() {
     DownloadStack(
-        chaptersList.first()
+        chaptersFakeList.first()
             .also { it.downloadState = DownloadState.Completed },
         expanded = true,
         downloaderAction = { _, _ -> }
@@ -99,7 +98,7 @@ private fun DownloadStack_Completed() {
 @Preview(showBackground = true)
 private fun DownloadStack_Paused() {
     DownloadStack(
-        chaptersList.first()
+        chaptersFakeList.first()
             .also { it.downloadState = DownloadState.Paused },
         expanded = true,
         downloaderAction = { _, _ -> }
@@ -110,7 +109,7 @@ private fun DownloadStack_Paused() {
 @Preview(showBackground = true)
 private fun DownloadStack_Downloading() {
     DownloadStack(
-        chaptersList.first()
+        chaptersFakeList.first()
             .also { it.downloadState = DownloadState.Downloading(flowOf(.5f)) },
         expanded = true,
         downloaderAction = { _, _ -> }

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
+import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import com.m7.quranplayer.player.domain.model.PlayerAction
@@ -20,7 +21,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import quranplayer.composeapp.generated.resources.Res
+import quranplayer.composeapp.generated.resources.allStringResources
+import quranplayer.composeapp.generated.resources.chapter_number
 
 class ChapterViewModel(
     private val chapterRepo: ChapterRepo,
@@ -28,18 +34,26 @@ class ChapterViewModel(
     private val downloaderRepo: DownloaderRepo,
 ) : ViewModel() {
 
+    private val originalChapters = MutableStateFlow<List<Chapter>>(emptyList())
+
     val chapters: StateFlow<List<Chapter>>
         field = MutableStateFlow(emptyList())
 
-    var downloadedChaptersCount by mutableIntStateOf(0)
-        private set
-
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            chapters.update {
-                chapterRepo.getChapters().map { chapter ->
-                    chapter.copy(downloadState = downloaderRepo.getDownloadState(chapter.id))
-                }
+            originalChapters.updateAndGet {
+                chapterRepo.getChapters(
+                    getChapterTitle = {
+                        getString(
+                            Res.allStringResources["_${it}"] ?: Res.string.chapter_number
+                        )
+                    },
+                    getChapterDownloadState = {
+                        downloaderRepo.getDownloadState(it)
+                    }
+                )
+            }.also { newChapters ->
+                chapters.update { newChapters }
             }
 
             updateDownloadedCount()
@@ -47,7 +61,7 @@ class ChapterViewModel(
 
         viewModelScope.launch(Dispatchers.Default) {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
-                chapters.update {
+                originalChapters.updateAndGet {
                     it.map { chapter ->
                         if (chapter.id == downloadId) {
                             chapter.copy(downloadState = state)
@@ -55,6 +69,8 @@ class ChapterViewModel(
                             chapter
                         }
                     }
+                }.also { newChapters ->
+                    chapters.update { newChapters }
                 }
 
                 updateDownloadedCount()
@@ -62,9 +78,27 @@ class ChapterViewModel(
         }
     }
 
-    private fun updateDownloadedCount() {
-        viewModelScope.launch {
-            downloadedChaptersCount = downloaderRepo.getDownloadedCount()
+    var downloadedChaptersCount by mutableIntStateOf(0)
+        private set
+
+    private suspend fun updateDownloadedCount() {
+        downloadedChaptersCount = downloaderRepo.getDownloadedCount()
+    }
+
+    fun search(text: String) {
+        Log("search text= $text")
+        viewModelScope.launch(Dispatchers.Default) {
+            text
+                .takeIf { it.isNotBlank() }
+                ?.trim()
+                ?.also { searchName ->
+                    originalChapters.value
+                        .filter {
+                            it.title.contains(searchName, ignoreCase = true)
+                        }.also { searchedChapters ->
+                            chapters.update { searchedChapters }
+                        }
+                } ?: chapters.update { originalChapters.value }
         }
     }
 

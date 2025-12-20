@@ -2,6 +2,7 @@
     <string name="chapters">Chapters</string>
 
     <string name="language">Language</string>
+    <string name="search_by_name">Search by chapter name</string>
 
     <string name="downloads">Downloads</string>
     <string name="download_all_chapters">Download All Chapters</string>

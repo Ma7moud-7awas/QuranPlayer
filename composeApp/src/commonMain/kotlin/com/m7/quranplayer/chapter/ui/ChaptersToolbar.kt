@@ -2,32 +2,37 @@ package com.m7.quranplayer.chapter.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.quranplayer.core.ui.OptionsRow
@@ -40,16 +45,29 @@ import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.chapters
 import quranplayer.composeapp.generated.resources.downloads
 import quranplayer.composeapp.generated.resources.language
+import quranplayer.composeapp.generated.resources.search_by_name
 
 @Composable
-@Preview(showBackground = true)
+@Preview(showBackground = true, locale = "ar")
 fun ChaptersToolbarPreview() {
-    ChaptersToolbar(2)
+    ChaptersToolbar(2, false, {}, {})
 }
 
 @Composable
-fun ChaptersToolbar(downloadedChaptersCount: Int, modifier: Modifier = Modifier) {
-    // todo: add search, download all, language
+@Preview(showBackground = true, locale = "ar")
+fun ChaptersToolbar_search() {
+    ChaptersToolbar(2, true, {}, {})
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChaptersToolbar(
+    downloadedChaptersCount: Int,
+    searchExpanded: Boolean,
+    onExpandSearch: (Boolean) -> Unit,
+    onSearch: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val containerShape = RoundedCornerShape(10)
     OutlinedCard(
         shape = containerShape,
@@ -57,34 +75,70 @@ fun ChaptersToolbar(downloadedChaptersCount: Int, modifier: Modifier = Modifier)
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        var expanded by rememberSaveable { mutableStateOf(false) }
+        var expandMenu by rememberSaveable { mutableStateOf(false) }
 
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.background(LightGreenGrey, containerShape)
-            ) {
-                // title
+        var searchText by rememberSaveable { mutableStateOf("") }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(56.dp).background(LightGreenGrey, containerShape)
+        ) {
+            // title
+            if (searchExpanded) {
+                TextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors()
+                        .copy(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent
+                        ),
+                    placeholder = {
+                        Text(
+                            stringResource(Res.string.search_by_name),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { onSearch(searchText) }),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
                 Text(
                     stringResource(Res.string.chapters),
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
                     color = GreenGrey,
                     modifier = Modifier.weight(1f)
+                        .clickable { onExpandSearch(true) }
                 )
+            }
 
-                // menu toggle
-                IconToggleButton(
-                    checked = expanded,
-                    onCheckedChange = { expanded = it },
-                ) {
-                    Icon(Icons.Rounded.MoreVert, "Download all")
-                }
+            // search toggle
+            IconToggleButton(
+                checked = searchExpanded,
+                onCheckedChange = {
+                    searchText = ""
+                    onSearch(searchText)
+                    onExpandSearch(it)
+                },
+            ) {
+                Icon(Icons.Rounded.Search, "Search")
+            }
+
+            // menu toggle
+            IconToggleButton(
+                checked = expandMenu,
+                onCheckedChange = { expandMenu = it },
+            ) {
+                Icon(Icons.Rounded.MoreVert, "Download all")
             }
         }
 
         // menu
-        OptionsStack(expanded) {
+        OptionsStack(expandMenu) {
             LanguageRow()
 
             DownloadRow(downloadedChaptersCount)
@@ -135,7 +189,7 @@ fun DownloadRow(downloadedChaptersCount: Int, modifier: Modifier = Modifier) {
         // label
         Text(
             stringResource(Res.string.downloads) + " :",
-            modifier = Modifier.fillMaxWidth(.42f)
+            modifier = Modifier.fillMaxWidth(.4f)
         )
 
         // value
@@ -143,11 +197,6 @@ fun DownloadRow(downloadedChaptersCount: Int, modifier: Modifier = Modifier) {
             "$downloadedChaptersCount / 114",
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
-        )
-
-        CircularProgressIndicator(
-            { .5f },
-            modifier = Modifier.size(25.dp)
         )
     }
 }

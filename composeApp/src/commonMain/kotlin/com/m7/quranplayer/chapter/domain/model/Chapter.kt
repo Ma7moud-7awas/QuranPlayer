@@ -3,10 +3,6 @@ package com.m7.quranplayer.chapter.domain.model
 import com.m7.quranplayer.core.di.format
 import com.m7.quranplayer.core.di.localize
 import com.m7.quranplayer.downloader.domain.model.DownloadState
-import org.jetbrains.compose.resources.StringResource
-import quranplayer.composeapp.generated.resources.Res
-import quranplayer.composeapp.generated.resources.allStringResources
-import quranplayer.composeapp.generated.resources.chapter_number
 
 data class Chapter(
     // used as a path to the audio file in the request
@@ -14,16 +10,23 @@ data class Chapter(
     // localized representation of the id as chapter number
     val number: String,
     // used to retrieve localized chapter title from resources
-    val titleRes: StringResource = Res.allStringResources["_${id}"] ?: Res.string.chapter_number,
+    val title: String,
 
     var downloadState: DownloadState = DownloadState.NotDownloaded
 ) {
 
     companion object Builder {
-        fun build(id: Int): Chapter {
+        suspend fun build(
+            id: Int,
+            getTitle: suspend (id: String) -> String,
+            getDownloadState: suspend (id: String) -> DownloadState
+        ): Chapter {
+            val formattedId = id.format("%03d")
             return Chapter(
-                id = id.format("%03d"),
-                number = id.localize()
+                id = formattedId,
+                number = id.localize(),
+                title = getTitle(formattedId),
+                downloadState = getDownloadState(formattedId)
             )
         }
     }

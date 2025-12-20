@@ -2,6 +2,7 @@
     <string name="chapters">السور</string>
 
     <string name="language">اللغة</string>
+    <string name="search_by_name">ابحث بإسم السورة</string>
 
     <string name="downloads">التنزيلات</string>
     <string name="download_all_chapters">تنزيل جميع السور</string>
