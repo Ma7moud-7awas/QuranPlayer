@@ -38,7 +38,7 @@ class AndroidDownloaderSource(
                     download: Download,
                     finalException: Exception?
                 ) {
-                    Log("download.state = ${download.state}")
+                    Log("download changed: id= ${download.request.id} - state= ${download.state}")
                     with(download) {
                         downloadState.trySend(
                             request.id to this.getDownloadState(request.id)
