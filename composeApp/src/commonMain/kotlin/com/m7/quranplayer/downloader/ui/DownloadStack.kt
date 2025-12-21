@@ -52,6 +52,7 @@ import quranplayer.composeapp.generated.resources.could_not_download_chapter
 import quranplayer.composeapp.generated.resources.download_chapter_to_play_offline
 
 @Composable
+@Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_NotDownloaded() {
     DownloadStack(
@@ -62,11 +63,12 @@ private fun DownloadStack_NotDownloaded() {
 }
 
 @Composable
+@Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_Queued() {
     DownloadStack(
         chaptersFakeList.first()
-            .also { it.downloadState = DownloadState.Queued },
+            .copy(downloadState = DownloadState.Queued),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
@@ -74,43 +76,45 @@ private fun DownloadStack_Queued() {
 
 @Composable
 @Preview(showBackground = true, locale = "ar")
+@Preview(showBackground = true)
 private fun DownloadStack_Error() {
     DownloadStack(
         chaptersFakeList.first()
-            .also { it.downloadState = DownloadState.Error(Exception()) },
+            .copy(downloadState = DownloadState.Error(Exception())),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
 }
 
 @Composable
+@Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_Completed() {
     DownloadStack(
         chaptersFakeList.first()
-            .also { it.downloadState = DownloadState.Completed },
+            .copy(downloadState = DownloadState.Completed),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
 }
 
 @Composable
-@Preview(showBackground = true)
+@Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Paused() {
     DownloadStack(
         chaptersFakeList.first()
-            .also { it.downloadState = DownloadState.Paused },
+            .copy(downloadState = DownloadState.Paused(.2f)),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
 }
 
 @Composable
-@Preview(showBackground = true)
+@Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Downloading() {
     DownloadStack(
         chaptersFakeList.first()
-            .also { it.downloadState = DownloadState.Downloading(flowOf(.5f)) },
+            .copy(downloadState = DownloadState.Downloading(flowOf(.5f))),
         expanded = true,
         downloaderAction = { _, _ -> }
     )
@@ -148,11 +152,14 @@ fun DownloadStack(
         }
 
         LaunchedEffect(chapter.downloadState) {
-            Log("chapter effect= ${chapter.downloadState}")
+            Log("effect downloadState= ${chapter.downloadState}")
             chapter.downloadState.also { state ->
+                // update progress
                 if (expanded && state is DownloadState.Downloading) {
-                    // update progress
                     state.updatedPosition.collectLatest { progress = it }
+
+                } else if (expanded && state is DownloadState.Paused) {
+                    progress = state.downloadedPercent
                 }
             }
         }

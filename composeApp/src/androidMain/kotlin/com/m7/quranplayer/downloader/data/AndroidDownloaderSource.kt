@@ -53,13 +53,6 @@ class AndroidDownloaderSource(
         return downloadUtil.getDownload(id)?.getDownloadState(id) ?: DownloadState.NotDownloaded
     }
 
-    override suspend fun getDownloadedCount(): Int {
-        return downloadUtil.getDownloadManager()
-            .downloadIndex
-            .getDownloads(Download.STATE_COMPLETED)
-            .count
-    }
-
     private fun Download.getDownloadState(id: String): DownloadState {
         Log("download: id = $id - state = $state")
         return when (this.state) {
@@ -74,24 +67,28 @@ class AndroidDownloaderSource(
             )
 
             Download.STATE_COMPLETED -> DownloadState.Completed
-            Download.STATE_STOPPED -> DownloadState.Paused
+            Download.STATE_STOPPED -> DownloadState.Paused(percentDownloaded / 100)
             Download.STATE_FAILED -> DownloadState.Error(Exception(failureReason.toString()))
             else -> DownloadState.NotDownloaded
         }
     }
 
+    override suspend fun getDownloadedCount(): Int {
+        return downloadUtil.getDownloadManager()
+            .downloadIndex
+            .getDownloads(Download.STATE_COMPLETED)
+            .count
+    }
+
     override suspend fun start(id: String, url: String) {
-        if (getDownloadState(id) !is DownloadState.Completed) {
-            val downloadRequest = DownloadRequest.Builder(id, url.toUri()).build()
-            DownloadService.sendAddDownload(
-                context,
-                DownloaderService::class.java,
-                downloadRequest,
-                /* foreground= */ true
-            )
-        } else {
-            Log("$id already downloaded!")
-        }
+        val downloadRequest = DownloadRequest.Builder(id, url.toUri()).build()
+
+        DownloadService.sendAddDownload(
+            context,
+            DownloaderService::class.java,
+            downloadRequest,
+            /* foreground= */ true
+        )
     }
 
     override suspend fun pause(id: String) {

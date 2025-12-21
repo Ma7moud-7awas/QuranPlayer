@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
 import com.m7.quranplayer.core.Log
+import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import com.m7.quranplayer.player.domain.model.PlayerAction
@@ -61,6 +62,13 @@ class ChapterViewModel(
 
         viewModelScope.launch(Dispatchers.Default) {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
+                if (state == DownloadState.NotDownloaded
+                    || state is DownloadState.Paused
+                    || state is DownloadState.Error
+                ) {
+                    downloadedAllEnabled = true
+                }
+
                 originalChapters.updateAndGet {
                     it.map { chapter ->
                         if (chapter.id == downloadId) {
@@ -78,13 +86,6 @@ class ChapterViewModel(
         }
     }
 
-    var downloadedChaptersCount by mutableIntStateOf(0)
-        private set
-
-    private suspend fun updateDownloadedCount() {
-        downloadedChaptersCount = downloaderRepo.getDownloadedCount()
-    }
-
     fun search(text: String) {
         Log("search text= $text")
         viewModelScope.launch(Dispatchers.Default) {
@@ -96,9 +97,51 @@ class ChapterViewModel(
                         .filter {
                             it.title.contains(searchName, ignoreCase = true)
                         }.also { searchedChapters ->
-                            chapters.update { searchedChapters }
+                            chapters.update {
+                                // reset player
+                                setSelectedIndex(-1)
+                                searchedChapters
+                            }
                         }
-                } ?: chapters.update { originalChapters.value }
+                } ?: chapters.update {
+                // reset player
+                setSelectedIndex(-1)
+                originalChapters.value
+            }
+        }
+    }
+
+    var downloadedChaptersCount by mutableIntStateOf(0)
+        private set
+
+    var downloadedAllEnabled by mutableStateOf(downloadedChaptersCount < 114)
+        private set
+
+    private suspend fun updateDownloadedCount() {
+        downloadedChaptersCount = downloaderRepo.getDownloadedCount()
+    }
+
+    fun downloadAll(start: Boolean) {
+        viewModelScope.launch(Dispatchers.Default) {
+            if (start) {
+                downloadedAllEnabled = false
+                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                    if (downloadState == DownloadState.NotDownloaded
+                        || downloadState is DownloadState.Paused
+                    ) {
+                        downloaderRepo.start(id)
+                    }
+                }
+            } else {
+                downloadedAllEnabled = true
+                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                    if (downloadState is DownloadState.Downloading
+                        || downloadState == DownloadState.Queued
+                    ) {
+                        downloaderRepo.pause(id)
+                    }
+                }
+            }
         }
     }
 
@@ -106,12 +149,23 @@ class ChapterViewModel(
         private set
 
     fun setSelectedIndex(indx: Int) {
-        // pause the same chapter or play the new one.
-        if (indx == selectedChapterIndx && playerState.value is PlayerState.Playing) {
-            playerAction(PlayerAction.Pause)
-        } else {
-            selectedChapterIndx = indx
-            playerAction(PlayerAction.Play)
+        when (indx) {
+            -1 -> {
+                // deselect state.
+                selectedChapterIndx = indx
+                playerAction(PlayerAction.Pause)
+            }
+
+            selectedChapterIndx if playerState.value is PlayerState.Playing -> {
+                // pause the same chapter.
+                playerAction(PlayerAction.Pause)
+            }
+
+            else -> {
+                // play a new chapter.
+                selectedChapterIndx = indx
+                playerAction(PlayerAction.Play)
+            }
         }
     }
 
@@ -153,11 +207,9 @@ class ChapterViewModel(
 
     private fun play() {
         viewModelScope.launch {
-            if (selectedChapterIndx == -1) {
-                // todo: play last cashed chapter, or scroll to the bookmarked chapter
-                selectedChapterIndx++
+            if (selectedChapterIndx > -1) {
+                playerRepo.play(chapters.value[selectedChapterIndx].id)
             }
-            playerRepo.play(chapters.value[selectedChapterIndx].id)
         }
     }
 

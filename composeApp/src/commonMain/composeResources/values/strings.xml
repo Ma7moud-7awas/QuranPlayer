@@ -1,15 +1,18 @@
 <resources>
     <string name="chapters">Chapters</string>
-
-    <string name="language">Language</string>
     <string name="search_by_name">Search by chapter name</string>
 
+    <string name="language">Language</string>
+    <string name="current_language">English</string>
+
     <string name="downloads">Downloads</string>
+    <string name="download_all">Download all</string>
+    <string name="downloads_count">%1$d of 114</string>
     <string name="download_all_chapters">Download All Chapters</string>
     <string name="chapter_is_available_offline">Chapter is available offline</string>
     <string name="chapter_added_to_queue">Chapter added to Download Queue</string>
     <string name="could_not_download_chapter">Couldn't download chapter, try again later</string>
-    <string name="download_chapter_to_play_offline">Downloaded chapter to play offline</string>
+    <string name="download_chapter_to_play_offline">Download chapter to play offline</string>
 
     <string name="chapter_number">chapter number %1$s</string>
     <string name="_001">Al Fateha</string>

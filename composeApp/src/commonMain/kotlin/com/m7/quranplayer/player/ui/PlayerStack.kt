@@ -111,7 +111,7 @@ fun PlayerStack(
         }
 
         LaunchedEffect(playerState) {
-            Log("playerState effect= $playerState, isSelected= $isSelected")
+            Log("effect -> isSelected= $isSelected - playerState= $playerState")
             if (isSelected && playerState is PlayerState.Playing) {
                 // update progress
                 totalMillis = playerState.duration
@@ -259,7 +259,11 @@ fun ProgressSlider(
 }
 
 @Composable
-fun DurationText(duration: String, textAlign: TextAlign? = null, modifier: Modifier = Modifier) {
+fun DurationText(
+    duration: String,
+    textAlign: TextAlign? = null,
+    modifier: Modifier = Modifier
+) {
     Text(
         duration,
         fontFamily = FontFamily.Cursive,

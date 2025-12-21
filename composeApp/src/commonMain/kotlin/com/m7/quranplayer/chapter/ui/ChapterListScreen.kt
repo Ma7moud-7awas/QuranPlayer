@@ -90,8 +90,10 @@ fun ChapterListScreen(
     ) {
         item(key = Res.string.chapters.key) {
             ChaptersToolbar(
-                chapterViewModel.downloadedChaptersCount,
-                searchExpanded,
+                downloadedChaptersCount = chapterViewModel.downloadedChaptersCount,
+                downloadedAllEnabled = chapterViewModel.downloadedAllEnabled,
+                downloadAll = chapterViewModel::downloadAll,
+                searchExpanded = searchExpanded,
                 onExpandSearch = { searchExpanded = it },
                 onSearch = chapterViewModel::search
             )

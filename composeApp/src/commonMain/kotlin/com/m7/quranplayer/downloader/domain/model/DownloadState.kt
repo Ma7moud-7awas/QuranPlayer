@@ -10,7 +10,8 @@ sealed interface DownloadState {
 
     data object Queued : DownloadState
 
-    data object Paused : DownloadState
+    @Immutable
+    data class Paused(val downloadedPercent: Float) : DownloadState
 
     data object Completed : DownloadState
 
