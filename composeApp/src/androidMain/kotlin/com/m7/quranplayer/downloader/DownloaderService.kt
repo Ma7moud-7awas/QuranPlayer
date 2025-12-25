@@ -50,7 +50,7 @@ class DownloaderService : DownloadService(
                                 R.drawable.ic_launcher_foreground,
                                 /* contentIntent= */ null,
                                 Util.fromUtf8Bytes(download.request.data)
-                            );
+                            )
                         }
 
                         Download.STATE_FAILED -> {

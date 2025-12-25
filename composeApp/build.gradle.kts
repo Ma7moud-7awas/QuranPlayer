@@ -40,7 +40,6 @@ kotlin {
                 with(compose) {
                     implementation(runtime)
                     implementation(foundation)
-//                    implementation(material3)
                     implementation(ui)
                     implementation(components.resources)
                     implementation(components.uiToolingPreview)
