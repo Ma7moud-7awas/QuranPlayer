@@ -2,11 +2,11 @@ package com.m7.quranplayer.core.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -30,10 +30,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
-fun App(onStateChange: (PlayerState) -> Unit = {}) {
+fun App(onStateChange: @Composable (PlayerState) -> Unit = {}) {
     QuranPlayerTheme {
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
@@ -67,6 +65,7 @@ fun App(onStateChange: (PlayerState) -> Unit = {}) {
                 onSelectedItemChanged = {
                     selectedIndex = it
                 },
+                modifier = Modifier.padding(innerPadding)
             )
 
             // update platform media center with player state

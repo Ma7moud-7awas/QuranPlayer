@@ -32,18 +32,18 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun AnimatedChapterNumber(
-    isPlaying: Boolean = false,
-    chapterNum: String,
+    isPlaying: () -> Boolean,
+    chapterNum: () -> String,
     modifier: Modifier = Modifier
 ) {
     val playingTransition = updateTransition(isPlaying, "Select State")
 
     val selectColor by playingTransition.animateColor(label = "Color") { isPlaying ->
-        if (isPlaying) Green else Orange
+        if (isPlaying()) Green else Orange
     }
 
     val selectProgress by playingTransition.animateFloat(label = "Progress") { isPlaying ->
-        if (isPlaying) 1f else 0f
+        if (isPlaying()) 1f else 0f
     }
 
     val morphed by remember {
@@ -65,6 +65,6 @@ fun AnimatedChapterNumber(
                 .background(selectColor)
         )
 
-        Text(text = chapterNum, color = Color.White)
+        Text(text = chapterNum(), color = Color.White)
     }
 }

@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.Scheduler
 import androidx.media3.exoplayer.workmanager.WorkManagerScheduler
 import com.m7.quranplayer.R
+import com.m7.quranplayer.downloader.data.DownloadUtil
 import org.koin.android.ext.android.inject
 
 const val FOREGROUND_NOTIFICATION_ID = 1
@@ -49,7 +50,7 @@ class DownloaderService : DownloadService(
                                 R.drawable.ic_launcher_foreground,
                                 /* contentIntent= */ null,
                                 Util.fromUtf8Bytes(download.request.data)
-                            );
+                            )
                         }
 
                         Download.STATE_FAILED -> {

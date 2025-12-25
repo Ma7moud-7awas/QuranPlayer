@@ -77,7 +77,7 @@ fun ChapterListScreen(
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
-    var searchExpanded by remember { mutableStateOf(false) }
+    val (searchExpanded, setSearchExpanded) = remember { mutableStateOf(false) }
 
     LaunchedEffect(chapterViewModel.selectedChapterIndx) {
         onSelectedItemChanged(chapterViewModel.selectedChapterIndx)
@@ -90,23 +90,24 @@ fun ChapterListScreen(
     ) {
         item(key = Res.string.chapters.key) {
             ChaptersToolbar(
-                downloadedChaptersCount = chapterViewModel.downloadedChaptersCount,
-                downloadedAllEnabled = chapterViewModel.downloadedAllEnabled,
+                searchExpanded = { searchExpanded },
+                onExpandSearch = setSearchExpanded,
+                onSearch = chapterViewModel::search,
+                changeLanguage = chapterViewModel::changeLanguage,
+                downloadedChaptersCount = { chapterViewModel.downloadedChaptersCount },
+                downloadedAllEnabled = { chapterViewModel.downloadedAllEnabled },
                 downloadAll = chapterViewModel::downloadAll,
-                searchExpanded = searchExpanded,
-                onExpandSearch = { searchExpanded = it },
-                onSearch = chapterViewModel::search
             )
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->
             ChapterItem(
-                chapter = chapter,
-                isSelected = chapterViewModel.selectedChapterIndx == i,
-                playerState = playerState,
+                chapter = { chapter },
+                isSelected = { chapterViewModel.selectedChapterIndx == i },
+                playerState = { playerState },
                 playerAction = chapterViewModel::playerAction,
                 downloaderAction = chapterViewModel::downloaderAction,
-                isRepeatEnabled = chapterViewModel.isRepeatEnabled,
+                isRepeatEnabled = { chapterViewModel.isRepeatEnabled },
                 onRepeatClicked = chapterViewModel::onRepeatClicked,
                 onCardClicked = { chapterViewModel.setSelectedIndex(i) }
             )
@@ -119,12 +120,14 @@ fun ChapterListScreen(
 private fun ChapterItemPreview() {
     QuranPlayerTheme {
         ChapterItem(
-            chapter = chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded),
-            isSelected = true,
-            playerState = PlayerState.Idle,
+            chapter = {
+                chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded)
+            },
+            isSelected = { true },
+            playerState = { PlayerState.Idle },
             playerAction = {},
             downloaderAction = { _, _ -> },
-            isRepeatEnabled = false,
+            isRepeatEnabled = { false },
             onRepeatClicked = {},
             onCardClicked = {}
         )
@@ -133,17 +136,17 @@ private fun ChapterItemPreview() {
 
 @Composable
 fun ChapterItem(
-    chapter: Chapter,
-    isSelected: Boolean,
-    playerState: PlayerState,
+    chapter: () -> Chapter,
+    isSelected: () -> Boolean,
+    playerState: () -> PlayerState,
     playerAction: (PlayerAction) -> Unit,
     downloaderAction: (String, DownloaderAction) -> Unit,
-    isRepeatEnabled: Boolean,
+    isRepeatEnabled: () -> Boolean,
     onRepeatClicked: (Boolean) -> Unit,
     onCardClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isPlaying by rememberUpdatedState { isSelected && playerState is PlayerState.Playing }
+    val isPlaying by rememberUpdatedState { isSelected() && playerState() is PlayerState.Playing }
     var expanded by remember { mutableStateOf(false) }
 
     OutlinedCard(
@@ -162,14 +165,14 @@ fun ChapterItem(
 
         ChapterCard(
             chapter = chapter,
-            isPlaying = isPlaying(),
+            isPlaying = isPlaying,
             onDownloadClicked = { expanded = !expanded },
             modifier = Modifier.clickable(onClick = onCardClicked)
         )
 
         DownloadStack(
             chapter = chapter,
-            expanded = expanded,
+            expanded = { expanded },
             downloaderAction = downloaderAction
         )
     }
@@ -177,18 +180,18 @@ fun ChapterItem(
 
 @Composable
 fun ChapterCard(
-    chapter: Chapter,
-    isPlaying: Boolean,
+    chapter: () -> Chapter,
+    isPlaying: () -> Boolean,
     onDownloadClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val cardBgColor by animateColorAsState(
-        targetValue = if (isPlaying) Orange.copy(.75f)
+        targetValue = if (isPlaying()) Orange.copy(.75f)
         else CardDefaults.cardColors().containerColor
     )
 
     val downloadIcon =
-        if (chapter.downloadState is DownloadState.Completed) Icons.Rounded.DownloadDone
+        if (chapter().downloadState is DownloadState.Completed) Icons.Rounded.DownloadDone
         else Icons.Rounded.Download
 
     Card(
@@ -199,13 +202,13 @@ fun ChapterCard(
             // number
             AnimatedChapterNumber(
                 isPlaying = isPlaying,
-                chapterNum = chapter.number,
+                chapterNum = { chapter().number },
                 modifier = Modifier.padding(8.dp)
             )
 
             // title
             Text(
-                text = chapter.title,
+                text = chapter().title,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,

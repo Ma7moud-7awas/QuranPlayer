@@ -4,6 +4,7 @@
 
     <string name="language">Language</string>
     <string name="current_language">English</string>
+    <string name="app_will_be_closed">App will be closed to change language</string>
 
     <string name="downloads">Downloads</string>
     <string name="download_all">Download all</string>

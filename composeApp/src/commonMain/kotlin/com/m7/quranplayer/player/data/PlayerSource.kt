@@ -7,9 +7,9 @@ interface PlayerSource {
 
     val playerState: Channel<PlayerState>
 
-    suspend fun setItem(url: String)
+    suspend fun setItem(id: String)
 
-    suspend fun play(url: String)
+    suspend fun play(id: String)
 
     suspend fun pause()
 

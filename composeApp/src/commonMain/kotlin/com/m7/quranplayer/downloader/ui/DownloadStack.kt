@@ -56,8 +56,8 @@ import quranplayer.composeapp.generated.resources.download_chapter_to_play_offli
 @Preview(showBackground = true)
 private fun DownloadStack_NotDownloaded() {
     DownloadStack(
-        chaptersFakeList.first(),
-        expanded = true,
+        { chaptersFakeList.first() },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -67,9 +67,10 @@ private fun DownloadStack_NotDownloaded() {
 @Preview(showBackground = true)
 private fun DownloadStack_Queued() {
     DownloadStack(
-        chaptersFakeList.first()
-            .copy(downloadState = DownloadState.Queued),
-        expanded = true,
+        {
+            chaptersFakeList.first().copy(downloadState = DownloadState.Queued)
+        },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -79,9 +80,11 @@ private fun DownloadStack_Queued() {
 @Preview(showBackground = true)
 private fun DownloadStack_Error() {
     DownloadStack(
-        chaptersFakeList.first()
-            .copy(downloadState = DownloadState.Error(Exception())),
-        expanded = true,
+        {
+            chaptersFakeList.first()
+                .copy(downloadState = DownloadState.Error(Exception()))
+        },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -91,9 +94,11 @@ private fun DownloadStack_Error() {
 @Preview(showBackground = true)
 private fun DownloadStack_Completed() {
     DownloadStack(
-        chaptersFakeList.first()
-            .copy(downloadState = DownloadState.Completed),
-        expanded = true,
+        {
+            chaptersFakeList.first()
+                .copy(downloadState = DownloadState.Completed)
+        },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -102,9 +107,11 @@ private fun DownloadStack_Completed() {
 @Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Paused() {
     DownloadStack(
-        chaptersFakeList.first()
-            .copy(downloadState = DownloadState.Paused(.2f)),
-        expanded = true,
+        {
+            chaptersFakeList.first()
+                .copy(downloadState = DownloadState.Paused(.2f))
+        },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -113,9 +120,11 @@ private fun DownloadStack_Paused() {
 @Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Downloading() {
     DownloadStack(
-        chaptersFakeList.first()
-            .copy(downloadState = DownloadState.Downloading(flowOf(.5f))),
-        expanded = true,
+        {
+            chaptersFakeList.first()
+                .copy(downloadState = DownloadState.Downloading(flowOf(.5f)))
+        },
+        expanded = { true },
         downloaderAction = { _, _ -> }
     )
 }
@@ -123,27 +132,27 @@ private fun DownloadStack_Downloading() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DownloadStack(
-    chapter: Chapter,
-    expanded: Boolean,
+    chapter: () -> Chapter,
+    expanded: () -> Boolean,
     downloaderAction: (String, DownloaderAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OptionsStack(expanded, modifier) {
+    OptionsStack(expanded(), modifier) {
         var progress by remember { mutableFloatStateOf(0f) }
         val amplitude by rememberUpdatedState {
             derivedStateOf {
-                if (chapter.downloadState is DownloadState.Downloading) .3f else .0f
+                if (chapter().downloadState is DownloadState.Downloading) .3f else .0f
             }
         }
 
-        val hintStringRes = when (chapter.downloadState) {
+        val hintStringRes = when (chapter().downloadState) {
             is DownloadState.Completed -> Res.string.chapter_is_available_offline
             is DownloadState.Queued -> Res.string.chapter_added_to_queue
             is DownloadState.Error -> Res.string.could_not_download_chapter
             else -> Res.string.download_chapter_to_play_offline
         }
 
-        val startIcon = when (chapter.downloadState) {
+        val startIcon = when (chapter().downloadState) {
             is DownloadState.Completed -> Icons.Rounded.Delete
             is DownloadState.Queued -> Icons.Rounded.LineWeight
             is DownloadState.Downloading -> Icons.Rounded.Pause
@@ -151,14 +160,14 @@ fun DownloadStack(
             else -> Icons.Rounded.Download
         }
 
-        LaunchedEffect(chapter.downloadState) {
-            Log("effect downloadState= ${chapter.downloadState}")
-            chapter.downloadState.also { state ->
+        LaunchedEffect(chapter().downloadState) {
+            Log("effect downloadState= ${chapter().downloadState}")
+            chapter().downloadState.also { state ->
                 // update progress
-                if (expanded && state is DownloadState.Downloading) {
+                if (expanded() && state is DownloadState.Downloading) {
                     state.updatedPosition.collectLatest { progress = it }
 
-                } else if (expanded && state is DownloadState.Paused) {
+                } else if (expanded() && state is DownloadState.Paused) {
                     progress = state.downloadedPercent
                 }
             }
@@ -170,7 +179,7 @@ fun DownloadStack(
                     .height(45.dp)
                     .padding(vertical = 10.dp)
             ) {
-                when (chapter.downloadState) {
+                when (chapter().downloadState) {
                     is DownloadState.NotDownloaded,
                     is DownloadState.Queued,
                     is DownloadState.Error,
@@ -191,7 +200,7 @@ fun DownloadStack(
                             colors = IconButtonDefaults.iconButtonColors()
                                 .copy(contentColor = Color.DarkGray),
                             onClick = {
-                                downloaderAction(chapter.id, DownloaderAction.Stop)
+                                downloaderAction(chapter().id, DownloaderAction.Stop)
                             }) {
                             Icon(Icons.Rounded.Stop, "Stop download")
                         }
@@ -213,14 +222,16 @@ fun DownloadStack(
                         .copy(contentColor = Color.DarkGray),
                     modifier = Modifier.weight(1f, fill = false),
                     onClick = {
-                        when (chapter.downloadState) {
-                            is DownloadState.Completed ->
-                                downloaderAction(chapter.id, DownloaderAction.Stop)
+                        chapter().let {
+                            when (it.downloadState) {
+                                is DownloadState.Completed ->
+                                    downloaderAction(it.id, DownloaderAction.Stop)
 
-                            is DownloadState.Downloading ->
-                                downloaderAction(chapter.id, DownloaderAction.Pause)
+                                is DownloadState.Downloading ->
+                                    downloaderAction(it.id, DownloaderAction.Pause)
 
-                            else -> downloaderAction(chapter.id, DownloaderAction.Start)
+                                else -> downloaderAction(it.id, DownloaderAction.Start)
+                            }
                         }
                     }
                 ) {

@@ -1,4 +1,4 @@
-package com.m7.quranplayer.downloader
+package com.m7.quranplayer.downloader.data
 
 import android.content.Context
 import androidx.media3.common.util.UnstableApi
@@ -14,6 +14,8 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
+import com.m7.quranplayer.downloader.DOWNLOAD_CONTENT_DIRECTORY
+import com.m7.quranplayer.downloader.DOWNLOAD_NOTIFICATION_CHANNEL_ID
 import java.io.File
 import java.util.concurrent.Executors
 
