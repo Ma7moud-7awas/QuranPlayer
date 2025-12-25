@@ -1,5 +1,6 @@
 package com.m7.quranplayer.player
 
+import android.content.Intent
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -19,10 +20,20 @@ class PlayerService : MediaSessionService() {
         return mediaSession
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        release()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
+        release()
+        super.onDestroy()
+    }
+
+    fun release() {
         player.release()
         mediaSession?.release()
         mediaSession = null
-        super.onDestroy()
     }
 }

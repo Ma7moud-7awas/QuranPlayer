@@ -121,7 +121,7 @@ fun ChaptersToolbar(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val (menuExpanded, expandMenu) = rememberSaveable { mutableStateOf(true) }
+        val (menuExpanded, expandMenu) = rememberSaveable { mutableStateOf(false) }
 
         var searchText by rememberSaveable { mutableStateOf("") }
         val focusRequester = remember { FocusRequester() }
@@ -276,7 +276,7 @@ fun LanguageRow(
     changeLanguage: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val (menuExpanded, expandMenu) = remember { mutableStateOf(true) }
+    val (menuExpanded, expandMenu) = remember { mutableStateOf(false) }
     val languages = mapOf(
         "ar" to "العربية",
         "en" to "English",
