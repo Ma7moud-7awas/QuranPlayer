@@ -10,6 +10,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.m7.quranplayer.core.Log
+import com.m7.quranplayer.core.data.Url
 import com.m7.quranplayer.player.PlayerService
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +26,7 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
 
     override val playerState: Channel<PlayerState> = Channel(CONFLATED)
 
-    private var currentItemUrl: String? = null
+    private var currentItemId: String? = null
     private var isCurrentItemEnded = false
     private var playerError: Exception? = null
 
@@ -115,22 +116,22 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
         })
     }
 
-    override suspend fun setItem(url: String) {
-        currentItemUrl = url
-        getPlayer().setMediaItem(MediaItem.fromUri(url))
+    override suspend fun setItem(id: String) {
+        currentItemId = id
+        getPlayer().setMediaItem(MediaItem.fromUri(Url.getDownloadUrlById(id)))
     }
 
-    override suspend fun play(url: String) {
+    override suspend fun play(id: String) {
         getPlayer().apply {
             playerError?.also {
                 // reset the player if there is an error to start over
                 prepare()
             }
 
-            if (currentItemUrl != url || currentMediaItem == null) {
+            if (currentItemId != id || currentMediaItem == null) {
                 // start new media item
-                setItem(url)
-            } else if (currentItemUrl == url && isCurrentItemEnded) {
+                setItem(id)
+            } else if (currentItemId == id && isCurrentItemEnded) {
                 // replay the current media item
                 seekTo(0)
             }
@@ -158,6 +159,6 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
         getPlayer().release()
         player = null
         playerError = null
-        currentItemUrl = null
+        currentItemId = null
     }
 }

@@ -1,6 +1,7 @@
 package com.m7.quranplayer.player.data
 
 import com.m7.quranplayer.core.Log
+import com.m7.quranplayer.downloader.data.DownloadManager
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
@@ -40,7 +41,7 @@ class IOSPlayerSource() : PlayerSource {
 
     override val playerState: Channel<PlayerState> = Channel(CONFLATED)
 
-    private var currentItemUrl: String? = null
+    private var currentItemId: String? = null
     private var playerItemObserver = NSObject()
     private var playerObserver = NSObject()
 
@@ -63,6 +64,7 @@ class IOSPlayerSource() : PlayerSource {
                         else -> {
                             if (player.currentItem?.status == AVPlayerItemStatusFailed) {
                                 sendErrorState()
+
                             } else if (isItemTimeCompleted()) {
                                 playerState.trySend(PlayerState.Ended)
 
@@ -151,11 +153,11 @@ class IOSPlayerSource() : PlayerSource {
     private fun CValue<CMTime>.toSeconds(): Double =
         CMTimeGetSeconds(this)
 
-    override fun setItem(url: String) {
+    override suspend fun setItem(id: String) {
         player.currentItem?.removeObserver(playerItemObserver, "status")
 
-        URLWithString(url)?.also {
-            currentItemUrl = url
+        URLWithString(DownloadManager.getDownloadUrl(id))?.also {
+            currentItemId = id
             player.replaceCurrentItemWithPlayerItem(AVPlayerItem(it))
 
             player.currentItem?.addObserver(
@@ -167,14 +169,14 @@ class IOSPlayerSource() : PlayerSource {
         }
     }
 
-    override fun play(url: String) {
-        if (currentItemUrl != url
+    override suspend fun play(id: String) {
+        if (currentItemId != id
             || player.currentItem == null
             || player.currentItem?.status == AVPlayerItemStatusFailed
         ) {
             // start new media item
-            setItem(url)
-        } else if (currentItemUrl == url && isItemTimeCompleted()) {
+            setItem(id)
+        } else if (currentItemId == id && isItemTimeCompleted()) {
             // replay the current media item
             seekTo(0)
         }
@@ -182,21 +184,21 @@ class IOSPlayerSource() : PlayerSource {
         player.play()
     }
 
-    override fun pause() {
+    override suspend fun pause() {
         player.pause()
     }
 
-    override fun seekTo(positionMs: Long) {
+    override suspend fun seekTo(positionMs: Long) {
         player.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
         player.play()
     }
 
-    override fun repeat() {
+    override suspend fun repeat() {
         seekTo(0)
         player.play()
     }
 
-    override fun release() {
+    override suspend fun release() {
         player.currentItem?.removeObserver(
             playerItemObserver,
             "status",
@@ -208,6 +210,6 @@ class IOSPlayerSource() : PlayerSource {
             null
         )
         player.finalize()
-        currentItemUrl = null
+        currentItemId = null
     }
 }

@@ -1,8 +1,10 @@
 package com.m7.quranplayer.chapter.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -28,30 +31,37 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.quranplayer.core.di.localize
 import com.m7.quranplayer.core.ui.OptionsRow
 import com.m7.quranplayer.core.ui.OptionsStack
+import com.m7.quranplayer.core.ui.theme.Green40
 import com.m7.quranplayer.core.ui.theme.GreenGrey
 import com.m7.quranplayer.core.ui.theme.LightGreenGrey
+import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
+import quranplayer.composeapp.generated.resources.app_will_be_closed
 import quranplayer.composeapp.generated.resources.chapters
 import quranplayer.composeapp.generated.resources.current_language
 import quranplayer.composeapp.generated.resources.download_all
@@ -65,12 +75,13 @@ import quranplayer.composeapp.generated.resources.search_by_name
 fun ChaptersToolbarPreview_SearchCollapsed() {
     QuranPlayerTheme {
         ChaptersToolbar(
-            downloadedChaptersCount = 2,
-            downloadedAllEnabled = false,
-            downloadAll = {},
-            searchExpanded = false,
+            searchExpanded = { false },
             onExpandSearch = {},
-            onSearch = {}
+            onSearch = {},
+            changeLanguage = {},
+            downloadedChaptersCount = { 12 },
+            downloadedAllEnabled = { true },
+            downloadAll = {},
         )
     }
 }
@@ -80,12 +91,13 @@ fun ChaptersToolbarPreview_SearchCollapsed() {
 fun ChaptersToolbar_SearchExpanded() {
     QuranPlayerTheme {
         ChaptersToolbar(
-            downloadedChaptersCount = 2,
-            downloadedAllEnabled = false,
-            downloadAll = {},
-            searchExpanded = true,
+            searchExpanded = { true },
             onExpandSearch = {},
-            onSearch = {}
+            onSearch = {},
+            changeLanguage = {},
+            downloadedChaptersCount = { 72 },
+            downloadedAllEnabled = { false },
+            downloadAll = {},
         )
     }
 }
@@ -93,12 +105,13 @@ fun ChaptersToolbar_SearchExpanded() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChaptersToolbar(
-    downloadedChaptersCount: Int,
-    downloadedAllEnabled: Boolean,
-    downloadAll: (Boolean) -> Unit,
-    searchExpanded: Boolean,
+    searchExpanded: () -> Boolean,
     onExpandSearch: (Boolean) -> Unit,
     onSearch: (String) -> Unit,
+    changeLanguage: (String) -> Unit,
+    downloadedChaptersCount: () -> Int,
+    downloadedAllEnabled: () -> Boolean,
+    downloadAll: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val containerShape = RoundedCornerShape(10)
@@ -108,14 +121,14 @@ fun ChaptersToolbar(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        var expandMenu by rememberSaveable { mutableStateOf(false) }
+        val (menuExpanded, expandMenu) = rememberSaveable { mutableStateOf(true) }
 
         var searchText by rememberSaveable { mutableStateOf("") }
         val focusRequester = remember { FocusRequester() }
 
         LaunchedEffect(searchExpanded) {
             // show keyboard
-            if (searchExpanded)
+            if (searchExpanded())
                 focusRequester.requestFocus()
         }
 
@@ -123,7 +136,7 @@ fun ChaptersToolbar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.height(56.dp).background(LightGreenGrey, containerShape)
         ) {
-            if (searchExpanded) {
+            if (searchExpanded()) {
                 // search
                 TextField(
                     value = searchText,
@@ -161,7 +174,7 @@ fun ChaptersToolbar(
 
             // search toggle
             IconToggleButton(
-                checked = searchExpanded,
+                checked = searchExpanded(),
                 onCheckedChange = { expand ->
                     if (!expand) {
                         // reset search & list
@@ -176,61 +189,39 @@ fun ChaptersToolbar(
 
             // menu toggle
             IconToggleButton(
-                checked = expandMenu,
-                onCheckedChange = { expandMenu = it },
+                checked = menuExpanded,
+                onCheckedChange = expandMenu,
             ) {
                 Icon(Icons.Rounded.MoreVert, "Download all")
             }
         }
 
         // menu
-        OptionsStack(expandMenu) {
-            LanguageRow()
+        OptionsStack(menuExpanded) {
+            val borderModifier = Modifier
+                .padding(5.dp)
+                .border(.5.dp, LightGreenGrey, RoundedCornerShape(30))
 
-            DownloadRow(downloadedChaptersCount, downloadedAllEnabled, downloadAll)
+            DownloadRow(
+                downloadedChaptersCount = downloadedChaptersCount,
+                downloadedAllEnabled = downloadedAllEnabled,
+                downloadAll = downloadAll,
+                modifier = borderModifier
+            )
+
+            LanguageRow(changeLanguage, borderModifier)
         }
     }
 }
 
 @Composable
-fun LanguageRow(modifier: Modifier = Modifier) {
-    OptionsRow(
-        modifier = modifier
-            .padding(5.dp)
-            .border(.5.dp, LightGreenGrey, RoundedCornerShape(30))
-    ) {
-        Icon(
-            Icons.Rounded.Language, null,
-            modifier = Modifier.padding(12.dp)
-        )
-
-        // label
-        Text(
-            stringResource(Res.string.language) + " :",
-            modifier = Modifier.fillMaxWidth(.4f)
-        )
-        // value
-        Text(
-            stringResource(Res.string.current_language),
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
 fun DownloadRow(
-    downloadedChaptersCount: Int,
-    downloadedAllEnabled: Boolean,
+    downloadedChaptersCount: () -> Int,
+    downloadedAllEnabled: () -> Boolean,
     downloadAll: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OptionsRow(
-        modifier = modifier
-            .padding(5.dp)
-            .border(.5.dp, LightGreenGrey, RoundedCornerShape(30))
-            .padding(end = 15.dp)
-    ) {
+    OptionsRow(modifier = modifier) {
         Icon(
             Icons.Rounded.Download, null,
             modifier = Modifier.padding(12.dp)
@@ -239,22 +230,22 @@ fun DownloadRow(
         // label
         Text(
             stringResource(Res.string.downloads) + " :",
-            modifier = Modifier.fillMaxWidth(.42f)
+            modifier = Modifier.fillMaxWidth(.4f)
         )
 
         // value
         Text(
             stringResource(
                 Res.string.downloads_count,
-                downloadedChaptersCount.localize()
+                downloadedChaptersCount().localize()
             ),
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )
 
         // download all btn & progress
-        if (downloadedChaptersCount < 114) {
-            if (downloadedAllEnabled) {
+        if (downloadedChaptersCount() < 114) {
+            if (downloadedAllEnabled()) {
                 TextButton(onClick = { downloadAll(true) }) {
                     Text(
                         text = stringResource(Res.string.download_all),
@@ -265,7 +256,7 @@ fun DownloadRow(
             } else {
                 IconButton({ downloadAll(false) }) {
                     CircularProgressIndicator(
-                        progress = { downloadedChaptersCount / 114f },
+                        progress = { downloadedChaptersCount() / 114f },
                         modifier = Modifier.padding(5.dp)
                     )
 
@@ -276,6 +267,92 @@ fun DownloadRow(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun LanguageRow(
+    changeLanguage: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (menuExpanded, expandMenu) = remember { mutableStateOf(true) }
+    val languages = mapOf(
+        "ar" to "العربية",
+        "en" to "English",
+    )
+
+    OptionsRow(modifier = modifier) {
+        Icon(
+            Icons.Rounded.Language, null,
+            modifier = Modifier.padding(12.dp)
+        )
+
+        // label
+        Text(
+            stringResource(Res.string.language) + " :",
+            modifier = Modifier.fillMaxWidth(.4f)
+        )
+
+        // value
+        Text(
+            stringResource(Res.string.current_language),
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+
+        // expand btn
+        IconButton(onClick = { expandMenu(!menuExpanded) }) {
+            Icon(
+                Icons.Rounded.KeyboardArrowDown, null,
+                modifier = Modifier.let {
+                    if (menuExpanded) it.rotate(180f) else it
+                }
+            )
+        }
+    }
+
+    AnimatedVisibility(menuExpanded) {
+        Column {
+            // hint
+            Text(
+                stringResource(Res.string.app_will_be_closed),
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center,
+                color = Orange,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // language options
+            languages
+                .forEach { lang ->
+                    key(lang.key) {
+                        val selected by remember {
+                            derivedStateOf { lang.key == Locale.current.language }
+                        }
+
+                        val color = if (selected) LightGreenGrey else Green40
+
+                        Text(
+                            lang.value,
+                            textAlign = TextAlign.Center,
+                            color = color,
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 60.dp)
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                .border(1.dp, color, RoundedCornerShape(30))
+                                .padding(5.dp)
+                                .let {
+                                    if (!selected)
+                                        it.clickable {
+                                            expandMenu(false)
+                                            changeLanguage(lang.key)
+                                        }
+                                    else it
+                                }
+                        )
+                    }
+                }
         }
     }
 }

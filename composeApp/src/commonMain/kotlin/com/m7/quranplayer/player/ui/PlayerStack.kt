@@ -61,26 +61,26 @@ import kotlin.time.toDuration
 @Preview(showBackground = true)
 fun PlayerStackPreview() {
     PlayerStack(
-        isSelected = true,
+        isSelected = { true },
         isPlaying = { true },
-        playerState = PlayerState.Playing(20, flowOf(100)),
+        playerState = { PlayerState.Playing(20, flowOf(100)) },
         playerAction = {},
-        isRepeatEnabled = false,
+        isRepeatEnabled = { false },
         onRepeatClicked = {}
     )
 }
 
 @Composable
 fun PlayerStack(
-    isSelected: Boolean,
+    isSelected: () -> Boolean,
     isPlaying: () -> Boolean,
-    playerState: PlayerState,
+    playerState: () -> PlayerState,
     playerAction: (PlayerAction) -> Unit,
-    isRepeatEnabled: Boolean,
+    isRepeatEnabled: () -> Boolean,
     onRepeatClicked: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OptionsStack(isSelected, modifier) {
+    OptionsStack(isSelected(), modifier) {
         var totalMillis by remember { mutableLongStateOf(0) }
         val totalDuration = (totalMillis / 1000).toDuration(DurationUnit.SECONDS)
 
@@ -92,7 +92,7 @@ fun PlayerStack(
         }
 
         val playIcon by rememberUpdatedState {
-            when (playerState) {
+            when (playerState()) {
                 is PlayerState.Playing -> Icons.Rounded.Pause
                 PlayerState.Loading -> Icons.Rounded.Downloading
                 else -> Icons.Rounded.PlayArrow
@@ -100,7 +100,7 @@ fun PlayerStack(
         }
 
         val playIconColor by rememberUpdatedState {
-            when (playerState) {
+            when (playerState()) {
                 is PlayerState.Playing,
                 PlayerState.Loading -> Orange
 
@@ -110,12 +110,14 @@ fun PlayerStack(
             }
         }
 
-        LaunchedEffect(playerState) {
-            Log("effect -> isSelected= $isSelected - playerState= $playerState")
-            if (isSelected && playerState is PlayerState.Playing) {
-                // update progress
-                totalMillis = playerState.duration
-                playerState.updatedPosition.collectLatest { progressMillis = it }
+        LaunchedEffect(playerState()) {
+            Log("effect -> isSelected= ${isSelected()} - playerState= ${playerState()}")
+            playerState().let {
+                if (isSelected() && it is PlayerState.Playing) {
+                    // update progress
+                    totalMillis = it.duration
+                    it.updatedPosition.collectLatest { progressMillis = it }
+                }
             }
         }
 
@@ -205,7 +207,7 @@ fun PlayerStack(
 
                     // repeat
                     IconToggleButton(
-                        checked = isRepeatEnabled,
+                        checked = isRepeatEnabled(),
                         onCheckedChange = onRepeatClicked,
                         modifier = Modifier
                             .padding(end = 30.dp)

@@ -8,7 +8,7 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.downloader.DownloadUtil
+import com.m7.quranplayer.downloader.data.DownloadUtil
 import com.m7.quranplayer.downloader.DownloaderService
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import kotlinx.coroutines.channels.Channel

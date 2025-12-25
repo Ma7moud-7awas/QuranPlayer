@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
 import com.m7.quranplayer.core.Log
+import com.m7.quranplayer.core.di.setLocale
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
@@ -35,30 +36,17 @@ class ChapterViewModel(
     private val downloaderRepo: DownloaderRepo,
 ) : ViewModel() {
 
+    fun changeLanguage(code: String) {
+        setLocale(code)
+    }
+
     private val originalChapters = MutableStateFlow<List<Chapter>>(emptyList())
 
     val chapters: StateFlow<List<Chapter>>
         field = MutableStateFlow(emptyList())
 
     init {
-        viewModelScope.launch(Dispatchers.Default) {
-            originalChapters.updateAndGet {
-                chapterRepo.getChapters(
-                    getChapterTitle = {
-                        getString(
-                            Res.allStringResources["_${it}"] ?: Res.string.chapter_number
-                        )
-                    },
-                    getChapterDownloadState = {
-                        downloaderRepo.getDownloadState(it)
-                    }
-                )
-            }.also { newChapters ->
-                chapters.update { newChapters }
-            }
-
-            updateDownloadedCount()
-        }
+        buildChapters()
 
         viewModelScope.launch(Dispatchers.Default) {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
@@ -83,6 +71,27 @@ class ChapterViewModel(
 
                 updateDownloadedCount()
             }
+        }
+    }
+
+    private fun buildChapters() {
+        viewModelScope.launch(Dispatchers.Default) {
+            originalChapters.updateAndGet {
+                chapterRepo.getChapters(
+                    getChapterTitle = {
+                        getString(
+                            Res.allStringResources["_${it}"] ?: Res.string.chapter_number
+                        )
+                    },
+                    getChapterDownloadState = {
+                        downloaderRepo.getDownloadState(it)
+                    }
+                )
+            }.also { newChapters ->
+                chapters.update { newChapters }
+            }
+
+            updateDownloadedCount()
         }
     }
 

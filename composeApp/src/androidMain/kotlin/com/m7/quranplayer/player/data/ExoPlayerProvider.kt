@@ -5,7 +5,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import com.m7.quranplayer.downloader.DownloadUtil
+import com.m7.quranplayer.downloader.data.DownloadUtil
 
 class ExoPlayerProvider(private val context: Context, private val downloadUtil: DownloadUtil) {
 

@@ -1,9 +1,10 @@
 <resources>
     <string name="chapters">السور</string>
+    <string name="search_by_name">ابحث بإسم السورة</string>
 
     <string name="language">اللغة</string>
     <string name="current_language">العربية</string>
-    <string name="search_by_name">ابحث بإسم السورة</string>
+    <string name="app_will_be_closed">سيتم إغلاق التطبيق لتغيير اللغة</string>
 
     <string name="downloads">التنزيلات</string>
     <string name="download_all">تنزيل الكل</string>

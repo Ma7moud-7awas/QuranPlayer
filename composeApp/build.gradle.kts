@@ -40,7 +40,7 @@ kotlin {
                 with(compose) {
                     implementation(runtime)
                     implementation(foundation)
-                    implementation(material3)
+//                    implementation(material3)
                     implementation(ui)
                     implementation(components.resources)
                     implementation(components.uiToolingPreview)
@@ -69,6 +69,7 @@ kotlin {
             dependencies {
                 implementation(compose.preview)
                 with(libs) {
+                    implementation(androidx.appcompat)
                     implementation(androidx.activity.compose)
                     implementation(androidx.media3.exoplayer)
                     implementation(androidx.media3.session)
@@ -116,6 +117,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    androidResources {
+        generateLocaleConfig = true
     }
 }
 
