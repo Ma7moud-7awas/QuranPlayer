@@ -48,7 +48,9 @@ fun MainViewController() = ComposeUIViewController {
     UIApplication.sharedApplication().beginReceivingRemoteControlEvents()
 
     var playerCenterAction by remember { mutableStateOf<PlayerAction?>(null) }
-    handleCenterCommands { playerCenterAction = it }
+    var currentChapterId: String? by remember { mutableStateOf(null) }
+
+    handleCenterCommands(currentChapterId) { playerCenterAction = it }
 
     val mediaCenter = MPNowPlayingInfoCenter.defaultCenter()
     val reciterName = stringResource(Res.string.saad_al_ghamdy)
@@ -58,6 +60,8 @@ fun MainViewController() = ComposeUIViewController {
         onLanguageChanged = { changeLanguage(it) },
         playerCenterAction = { playerCenterAction },
         onStateChanged = { playerState, chapter ->
+            currentChapterId = chapter?.id
+
             mediaCenter.playbackState =
                 when (playerState) {
                     PlayerState.Loading -> MPNowPlayingPlaybackStateUnknown
@@ -93,7 +97,7 @@ private fun changeLanguage(langCode: String) {
         .setObject(listOf(langCode), "AppleLanguages")
 }
 
-private fun handleCenterCommands(onCommand: (PlayerAction) -> Unit) {
+private fun handleCenterCommands(chapterId: String?, onCommand: (PlayerAction) -> Unit) {
     MPRemoteCommandCenter.sharedCommandCenter().apply {
         playCommand.addTargetWithHandler {
             onCommand(PlayerAction.Play)
@@ -104,11 +108,15 @@ private fun handleCenterCommands(onCommand: (PlayerAction) -> Unit) {
             return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
         }
         nextTrackCommand.addTargetWithHandler {
-            onCommand(PlayerAction.Next)
+            onCommand(
+                chapterId?.let { PlayerAction.Next.WithId(chapterId) } ?: PlayerAction.Next
+            )
             return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
         }
         previousTrackCommand.addTargetWithHandler {
-            onCommand(PlayerAction.Previous)
+            onCommand(
+                chapterId?.let { PlayerAction.Previous.WithId(chapterId) } ?: PlayerAction.Previous
+            )
             return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
         }
         changePlaybackPositionCommand.addTargetWithHandler { event ->

@@ -14,6 +14,7 @@ import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
+import platform.AVFoundation.AVQueuePlayer
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
 import platform.AVFoundation.duration
@@ -37,7 +38,7 @@ import platform.foundation.NSKeyValueObservingProtocol
 @OptIn(ExperimentalForeignApi::class)
 class IOSPlayerSource() : PlayerSource {
 
-    private var player: AVPlayer
+    private var player: AVQueuePlayer
 
     override val playerState: Channel<PlayerState> = Channel(CONFLATED)
 
@@ -47,7 +48,7 @@ class IOSPlayerSource() : PlayerSource {
 
     init {
         AVPlayer.observationEnabled = true
-        player = AVPlayer()
+        player = AVQueuePlayer()
 
         playerObserver = object : NSObject(), NSKeyValueObservingProtocol {
             override fun observeValueForKeyPath(

@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
-import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
@@ -60,19 +59,18 @@ class ChapterViewModel(
                     downloadedAllEnabled = true
                 }
 
-                originalChapters.updateAndGet {
-                    it.map { chapter ->
-                        if (chapter.id == downloadId) {
-                            chapter.copy(downloadState = state)
-                        } else {
-                            chapter
+                viewModelScope.launch(Dispatchers.Default) {
+                    originalChapters.updateAndGet {
+                        it.map { chapter ->
+                            if (chapter.id == downloadId)
+                                chapter.copy(downloadState = state) else chapter
                         }
+                    }.also { newChapters ->
+                        chapters.update { newChapters }
                     }
-                }.also { newChapters ->
-                    chapters.update { newChapters }
-                }
 
-                updateDownloadedCount()
+                    updateDownloadedCount()
+                }
             }
         }
     }
@@ -99,7 +97,6 @@ class ChapterViewModel(
     }
 
     fun search(text: String) {
-        Log("search text= $text")
         viewModelScope.launch(Dispatchers.Default) {
             text
                 .takeIf { it.isNotBlank() }
@@ -212,8 +209,10 @@ class ChapterViewModel(
                 is PlayerAction.Play -> play()
                 is PlayerAction.Next,
                 is PlayerAction.Next.WithId -> next()
+
                 is PlayerAction.Previous,
                 is PlayerAction.Previous.WithId -> previous()
+
                 is PlayerAction.Repeat -> playerRepo.repeat()
                 is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
             }

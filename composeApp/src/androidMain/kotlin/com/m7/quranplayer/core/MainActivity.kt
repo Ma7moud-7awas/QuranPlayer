@@ -41,12 +41,12 @@ class MainActivity : AppCompatActivity() {
             )
 
             App(
-                playerCenterAction = { playerCenterAction },
                 onLanguageChanged = { langCode ->
                     AppCompatDelegate.setApplicationLocales(
                         LocaleListCompat.forLanguageTags(langCode)
                     )
                 },
+                playerCenterAction = { playerCenterAction },
                 onStateChanged = { _, chapter ->
                     currentChapterId = chapter?.id
                 }

@@ -3,10 +3,11 @@
 
     <string name="chapters">السور</string>
     <string name="search_by_name">ابحث بإسم السورة</string>
-
     <string name="language">اللغة</string>
     <string name="current_language">العربية</string>
-    <string name="app_will_be_closed">سيتم إغلاق التطبيق لتغيير اللغة</string>
+    <string name="app_will_be_restarted">سيتم إعادة تشغيل التطبيق لتغيير اللغة</string>
+
+    <string name="check_device_connection">تحقق من اتصال جهازك ثم اعد المحاولة</string>
 
     <string name="downloads">التنزيلات</string>
     <string name="download_all">تنزيل الكل</string>

@@ -82,7 +82,7 @@ class IOSDownloaderSource(
     }
 
     override suspend fun getDownloadedCount(): Int {
-        return downloads.keys.count { DownloadManager.checkDownloadExists(it) }
+        return downloads.values.count { it.state == DownloadState.Completed }
     }
 
     override suspend fun start(id: String, url: String) {
@@ -117,7 +117,7 @@ class IOSDownloaderSource(
 
                 if (it.code != -999L) { // !cancelled
                     updateDownloadState(
-                        id, DownloadState.Error(Exception(it.toString()))
+                        id, DownloadState.Error(Exception(it.localizedDescription()))
                     )
                 }
                 return@handler

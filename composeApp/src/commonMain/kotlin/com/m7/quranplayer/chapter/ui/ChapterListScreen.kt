@@ -80,7 +80,6 @@ fun ChapterListScreen(
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
-
     LaunchedEffect(playerState) {
         onStateChanged(playerState, chapters.getOrNull(chapterViewModel.selectedChapterIndx))
     }

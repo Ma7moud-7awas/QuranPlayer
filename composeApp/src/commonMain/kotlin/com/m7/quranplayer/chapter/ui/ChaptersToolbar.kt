@@ -61,7 +61,7 @@ import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
-import quranplayer.composeapp.generated.resources.app_will_be_closed
+import quranplayer.composeapp.generated.resources.app_will_be_restarted
 import quranplayer.composeapp.generated.resources.chapters
 import quranplayer.composeapp.generated.resources.current_language
 import quranplayer.composeapp.generated.resources.download_all
@@ -316,7 +316,7 @@ fun LanguageRow(
         Column {
             // hint
             Text(
-                stringResource(Res.string.app_will_be_closed),
+                stringResource(Res.string.app_will_be_restarted),
                 fontSize = 10.sp,
                 textAlign = TextAlign.Center,
                 color = Orange,
