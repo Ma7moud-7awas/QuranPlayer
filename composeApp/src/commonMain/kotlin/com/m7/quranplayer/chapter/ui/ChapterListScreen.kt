@@ -69,19 +69,31 @@ private fun ChapterListScreenPreview() {
 @Composable
 fun ChapterListScreen(
     listState: LazyListState,
-    modifier: Modifier = Modifier,
-    onSelectedItemChanged: (Int) -> Unit
+    changeLanguage: (String) -> Unit,
+    playerCenterAction: () -> PlayerAction?,
+    onStateChanged: (PlayerState, Chapter?) -> Unit,
+    onSelectedItemChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val chapterViewModel: ChapterViewModel = koinViewModel()
 
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
-    val (searchExpanded, setSearchExpanded) = remember { mutableStateOf(false) }
+
+    LaunchedEffect(playerState) {
+        onStateChanged(playerState, chapters.getOrNull(chapterViewModel.selectedChapterIndx))
+    }
 
     LaunchedEffect(chapterViewModel.selectedChapterIndx) {
         onSelectedItemChanged(chapterViewModel.selectedChapterIndx)
     }
+
+    LaunchedEffect(playerCenterAction()) {
+        playerCenterAction()?.let { chapterViewModel.playerAction(it) }
+    }
+
+    val (searchExpanded, setSearchExpanded) = remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -93,7 +105,10 @@ fun ChapterListScreen(
                 searchExpanded = { searchExpanded },
                 onExpandSearch = setSearchExpanded,
                 onSearch = chapterViewModel::search,
-                changeLanguage = chapterViewModel::changeLanguage,
+                changeLanguage = {
+                    changeLanguage(it)
+                    chapterViewModel.onLanguageChanged()
+                },
                 downloadedChaptersCount = { chapterViewModel.downloadedChaptersCount },
                 downloadedAllEnabled = { chapterViewModel.downloadedAllEnabled },
                 downloadAll = chapterViewModel::downloadAll,

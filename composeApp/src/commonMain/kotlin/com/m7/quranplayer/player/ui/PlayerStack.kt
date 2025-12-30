@@ -26,7 +26,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -37,11 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.quranplayer.core.Log
@@ -58,12 +55,25 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @Composable
-@Preview(showBackground = true)
-fun PlayerStackPreview() {
+@Preview(showBackground = true, locale = "ar")
+fun PlayerStackPreview_Playing() {
     PlayerStack(
         isSelected = { true },
         isPlaying = { true },
-        playerState = { PlayerState.Playing(20, flowOf(100)) },
+        playerState = { PlayerState.Playing(100, flowOf( 30)) },
+        playerAction = {},
+        isRepeatEnabled = { false },
+        onRepeatClicked = {}
+    )
+}
+
+@Composable
+@Preview(showBackground = true)
+fun PlayerStackPreview_Paused() {
+    PlayerStack(
+        isSelected = { true },
+        isPlaying = { false },
+        playerState = { PlayerState.Paused },
         playerAction = {},
         isRepeatEnabled = { false },
         onRepeatClicked = {}
@@ -121,103 +131,101 @@ fun PlayerStack(
             }
         }
 
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            // slider
-            OptionsRow(
-                options = {
-                    ProgressSlider(
-                        progressMillis = progressMillis.toFloat(),
-                        totalMillis = totalMillis.toFloat(),
-                        onProgressChange = {
-                            Log("ProgressChange")
-                            if (playerState != PlayerState.Paused) {
-                                playerAction(PlayerAction.Pause)
+        // slider
+        OptionsRow(
+            options = {
+                ProgressSlider(
+                    progressMillis = progressMillis.toFloat(),
+                    totalMillis = totalMillis.toFloat(),
+                    onProgressChange = {
+                        Log("ProgressChange")
+                        if (playerState != PlayerState.Paused) {
+                            playerAction(PlayerAction.Pause)
+                        }
+                        progressMillis = it.toLong()
+                    },
+                    onProgressChangeFinished = {
+                        Log("ProgressChangeFinished")
+                        playerAction(PlayerAction.SeekTo(progressMillis))
+                    },
+                    modifier = Modifier.padding(horizontal = 5.dp)
+                )
+            }
+        )
+
+        // duration
+        OptionsRow(
+            options = {
+                // progress
+                DurationText(
+                    progressDuration.toString(),
+                    modifier = Modifier
+                        .weight(.5f)
+                        .padding(horizontal = 10.dp)
+                )
+
+                // total
+                DurationText(
+                    totalDuration.toString(),
+                    TextAlign.End,
+                    modifier = Modifier
+                        .weight(.5f)
+                        .padding(horizontal = 10.dp)
+                )
+            }
+        )
+
+        // controls
+        OptionsRow(
+            modifier = Modifier.padding(bottom = 15.dp),
+            options = {
+                Row(
+                    Modifier.weight(1f, false)
+                        .padding(horizontal = 30.dp)
+                        .border(1.dp, Color.Gray, RoundedCornerShape(50))
+                ) {
+                    // prev
+                    OutlinedIconButton({ playerAction(PlayerAction.Previous) }) {
+                        Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
+                    }
+
+                    // play/pause
+                    IconButton(
+                        {
+                            when {
+                                isPlaying() -> playerAction(PlayerAction.Pause)
+                                else -> playerAction(PlayerAction.Play)
                             }
-                            progressMillis = it.toLong()
                         },
-                        onProgressChangeFinished = {
-                            Log("ProgressChangeFinished")
-                            playerAction(PlayerAction.SeekTo(progressMillis))
-                        },
-                        modifier = Modifier.padding(horizontal = 5.dp)
-                    )
-                }
-            )
-
-            // duration
-            OptionsRow(
-                options = {
-                    // progress
-                    DurationText(
-                        progressDuration.toString(),
-                        modifier = Modifier
-                            .weight(.5f)
-                            .padding(horizontal = 10.dp)
-                    )
-
-                    // total
-                    DurationText(
-                        totalDuration.toString(),
-                        TextAlign.End,
-                        modifier = Modifier
-                            .weight(.5f)
-                            .padding(horizontal = 10.dp)
-                    )
-                }
-            )
-
-            // controls
-            OptionsRow(
-                modifier = Modifier.padding(bottom = 15.dp),
-                options = {
-                    Row(
-                        Modifier.weight(1f, false)
-                            .padding(horizontal = 30.dp)
-                            .border(1.dp, Color.Gray, RoundedCornerShape(50))
+                        colors = IconButtonDefaults.iconButtonColors()
+                            .copy(contentColor = playIconColor()),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        // prev
-                        OutlinedIconButton({ playerAction(PlayerAction.Previous) }) {
-                            Icon(Icons.AutoMirrored.Rounded.NavigateBefore, "Previous")
-                        }
-
-                        // play/pause
-                        IconButton(
-                            {
-                                when {
-                                    isPlaying() -> playerAction(PlayerAction.Pause)
-                                    else -> playerAction(PlayerAction.Play)
-                                }
-                            },
-                            colors = IconButtonDefaults.iconButtonColors()
-                                .copy(contentColor = playIconColor()),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = playIcon(),
-                                contentDescription = "Play/Pause",
-                                modifier = Modifier.aspectRatio(.9f)
-                            )
-                        }
-
-                        // next
-                        OutlinedIconButton({ playerAction(PlayerAction.Next) }) {
-                            Icon(Icons.AutoMirrored.Rounded.NavigateNext, "Next")
-                        }
+                        Icon(
+                            imageVector = playIcon(),
+                            contentDescription = "Play/Pause",
+                            modifier = Modifier.aspectRatio(.9f)
+                        )
                     }
 
-                    // repeat
-                    IconToggleButton(
-                        checked = isRepeatEnabled(),
-                        onCheckedChange = onRepeatClicked,
-                        modifier = Modifier
-                            .padding(end = 30.dp)
-                            .border(.5.dp, Color.LightGray, RoundedCornerShape(50))
-                    ) {
-                        Icon(Icons.Rounded.RepeatOne, "Repeat")
+                    // next
+                    OutlinedIconButton({ playerAction(PlayerAction.Next) }) {
+                        Icon(Icons.AutoMirrored.Rounded.NavigateNext, "Next")
                     }
                 }
-            )
-        }
+
+                // repeat
+                IconToggleButton(
+                    checked = isRepeatEnabled(),
+                    onCheckedChange = onRepeatClicked,
+                    modifier = Modifier
+                        .padding(end = 30.dp)
+                        .border(.5.dp, Color.LightGray, RoundedCornerShape(50))
+                ) {
+                    Icon(Icons.Rounded.RepeatOne, "Repeat")
+                }
+            }
+        )
     }
 }
 

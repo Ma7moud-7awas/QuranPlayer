@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">مشغل القرآن</string>
+    <string name="download_channel_name">تنزيل السور</string>
+    <string name="download_channel_desc">تنزيل السور لتكون متاحة بدون انترنت</string>
+
+    <string name="next">التالي</string>
+    <string name="previous">السابق</string>
+</resources>

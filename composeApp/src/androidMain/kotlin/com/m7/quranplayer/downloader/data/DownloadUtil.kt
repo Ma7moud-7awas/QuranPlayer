@@ -1,6 +1,7 @@
 package com.m7.quranplayer.downloader.data
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -19,7 +20,7 @@ import com.m7.quranplayer.downloader.DOWNLOAD_NOTIFICATION_CHANNEL_ID
 import java.io.File
 import java.util.concurrent.Executors
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 class DownloadUtil(private val context: Context) {
 
     private var downloadManager: DownloadManager? = null

@@ -1,14 +1,11 @@
 package com.m7.quranplayer.core.di
 
-import android.os.Process.killProcess
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.Player
 import com.m7.quranplayer.downloader.data.AndroidDownloaderSource
 import com.m7.quranplayer.downloader.data.DownloadUtil
 import com.m7.quranplayer.downloader.data.DownloaderSource
 import com.m7.quranplayer.player.data.AndroidPlayerSource
-import com.m7.quranplayer.player.data.ExoPlayerProvider
+import com.m7.quranplayer.player.data.PlayerProvider
 import com.m7.quranplayer.player.data.PlayerSource
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -18,18 +15,11 @@ actual val platformModule = module {
 
     single { DownloadUtil(androidContext()) }
 
-    single<ExoPlayer> {
-        ExoPlayerProvider(androidContext(), get()).provide()
-    }
+    single<Player> { PlayerProvider.getPlayer(androidContext()) }
 
     single<PlayerSource> { AndroidPlayerSource(androidContext()) }
 
     single<DownloaderSource> { AndroidDownloaderSource(androidContext(), get()) }
-}
-
-actual fun setLocale(langCode: String) {
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(langCode))
-    killProcess(android.os.Process.myPid())
 }
 
 actual fun Int.format(format: String) = String.format(Locale.ROOT, format, this)

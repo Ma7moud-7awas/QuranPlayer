@@ -16,15 +16,9 @@ class PlayerRepoImpl(
     override val playerState: Flow<PlayerState> =
         playerSource.playerState.receiveAsFlow()
 
-    override suspend fun setItem(id: String) {
+    override suspend fun play(id: String, title: String) {
         withContext(dispatcher) {
-            playerSource.setItem(id)
-        }
-    }
-
-    override suspend fun play(id: String) {
-        withContext(dispatcher) {
-            playerSource.play(id)
+            playerSource.play(id, title)
         }
     }
 

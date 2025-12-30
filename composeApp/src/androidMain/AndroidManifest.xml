@@ -36,7 +36,7 @@
         </service>
 
         <service
-            android:name=".player.PlayerService"
+            android:name=".player.ui.PlayerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">

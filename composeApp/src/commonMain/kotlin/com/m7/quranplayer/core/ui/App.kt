@@ -19,10 +19,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.ui.ChapterListScreen
 import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -31,7 +33,11 @@ import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 
 @Composable
-fun App(onStateChange: @Composable (PlayerState) -> Unit = {}) {
+fun App(
+    onLanguageChanged: (String) -> Unit,
+    playerCenterAction: () -> PlayerAction?,
+    onStateChanged: (PlayerState, Chapter?) -> Unit
+) {
     QuranPlayerTheme {
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
@@ -62,16 +68,14 @@ fun App(onStateChange: @Composable (PlayerState) -> Unit = {}) {
             // list
             ChapterListScreen(
                 listState,
+                changeLanguage = onLanguageChanged,
+                playerCenterAction = playerCenterAction,
+                onStateChanged = onStateChanged,
                 onSelectedItemChanged = {
                     selectedIndex = it
                 },
                 modifier = Modifier.padding(innerPadding)
             )
-
-            // update platform media center with player state
-//            LaunchedEffect(playerState) {
-//                onStateChange(playerState)
-//            }
         }
     }
 }

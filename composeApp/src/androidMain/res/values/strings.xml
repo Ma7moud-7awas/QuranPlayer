@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name">QuranPlayer</string>
+    <string name="app_name">Quran Player</string>
     <string name="download_channel_name">Download Chapters</string>
     <string name="download_channel_desc">Download Chapters to be available offline</string>
+
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
 </resources>

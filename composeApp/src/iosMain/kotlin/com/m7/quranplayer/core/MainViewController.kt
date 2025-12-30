@@ -1,17 +1,24 @@
 package com.m7.quranplayer.core
 
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.ComposeUIViewController
 import com.m7.quranplayer.core.di.initKoin
 import com.m7.quranplayer.core.ui.App
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import platform.AVFAudio.AVAudioSession
-import platform.AVFAudio.AVAudioSessionCategoryOptionDuckOthers
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
-import platform.AVFAudio.AVAudioSessionModeDefault
 import platform.AVFAudio.setActive
+import platform.Foundation.NSUserDefaults
+import platform.MediaPlayer.MPChangePlaybackPositionCommandEvent
 import platform.MediaPlayer.MPMediaItemPropertyArtist
 import platform.MediaPlayer.MPMediaItemPropertyPlaybackDuration
 import platform.MediaPlayer.MPMediaItemPropertyTitle
@@ -21,52 +28,98 @@ import platform.MediaPlayer.MPNowPlayingPlaybackStatePaused
 import platform.MediaPlayer.MPNowPlayingPlaybackStatePlaying
 import platform.MediaPlayer.MPNowPlayingPlaybackStateStopped
 import platform.MediaPlayer.MPNowPlayingPlaybackStateUnknown
+import platform.MediaPlayer.MPRemoteCommandCenter
+import platform.MediaPlayer.MPRemoteCommandHandlerStatusCommandFailed
+import platform.MediaPlayer.MPRemoteCommandHandlerStatusSuccess
 import platform.UIKit.UIApplication
 import platform.UIKit.beginReceivingRemoteControlEvents
+import quranplayer.composeapp.generated.resources.Res
+import quranplayer.composeapp.generated.resources.saad_al_ghamdy
 
 @OptIn(ExperimentalForeignApi::class)
 fun MainViewController() = ComposeUIViewController {
     initKoin()
+
     AVAudioSession.sharedInstance().apply {
-        setCategory(
-            category = AVAudioSessionCategoryPlayback,
-            mode = AVAudioSessionModeDefault,
-            options = AVAudioSessionCategoryOptionDuckOthers,
-            error = null
-        )
+        setCategory(AVAudioSessionCategoryPlayback, null)
         setActive(true, null)
     }
+
     UIApplication.sharedApplication().beginReceivingRemoteControlEvents()
 
-    val playingCenter = MPNowPlayingInfoCenter.defaultCenter()
+    var playerCenterAction by remember { mutableStateOf<PlayerAction?>(null) }
+    handleCenterCommands { playerCenterAction = it }
 
-    // todo: handle center control events
-//    MPRemoteCommandCenter.sharedCommandCenter().apply {
-//        playCommand.addTargetWithHandler {
-//            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
-//        }
-//    }
+    val mediaCenter = MPNowPlayingInfoCenter.defaultCenter()
+    val reciterName = stringResource(Res.string.saad_al_ghamdy)
+    val scope = rememberCoroutineScope()
 
-    App { playerState ->
-        LaunchedEffect(playerState) {
-            playingCenter.playbackState = when (playerState) {
-                PlayerState.Loading -> MPNowPlayingPlaybackStateUnknown
-                is PlayerState.Playing -> {
-                    playingCenter.nowPlayingInfo =
-                        mapOf(
-                            MPMediaItemPropertyTitle to "Quran Player",
-                            MPMediaItemPropertyArtist to "Saad Al Ghamdy",
-                            MPMediaItemPropertyPlaybackDuration to playerState.duration / 1000,
-                            MPNowPlayingInfoPropertyElapsedPlaybackTime to playerState.updatedPosition.last() / 1000,
-                        )
+    App(
+        onLanguageChanged = { changeLanguage(it) },
+        playerCenterAction = { playerCenterAction },
+        onStateChanged = { playerState, chapter ->
+            mediaCenter.playbackState =
+                when (playerState) {
+                    PlayerState.Loading -> MPNowPlayingPlaybackStateUnknown
+                    is PlayerState.Playing -> {
+                        mediaCenter.nowPlayingInfo =
+                            mapOf(
+                                MPMediaItemPropertyArtist to reciterName,
+                                MPMediaItemPropertyTitle to "${chapter?.title}",
+                                MPMediaItemPropertyPlaybackDuration to playerState.duration / 1000,
+                            )
 
-                    MPNowPlayingPlaybackStatePlaying
+                        scope.launch {
+                            playerState.updatedPosition.collectLatest { elapsedTime ->
+                                mediaCenter.nowPlayingInfo = mediaCenter.nowPlayingInfo?.let {
+                                    it + (MPNowPlayingInfoPropertyElapsedPlaybackTime to elapsedTime / 1000)
+                                }
+                            }
+                        }
+
+                        MPNowPlayingPlaybackStatePlaying
+                    }
+
+                    PlayerState.Paused -> MPNowPlayingPlaybackStatePaused
+                    PlayerState.Ended -> MPNowPlayingPlaybackStateStopped
+                    else -> MPNowPlayingPlaybackStateStopped
                 }
+        }
+    )
+}
 
-                PlayerState.Paused -> MPNowPlayingPlaybackStatePaused
-                PlayerState.Ended -> MPNowPlayingPlaybackStateStopped
-                else -> MPNowPlayingPlaybackStateStopped
-            }
+private fun changeLanguage(langCode: String) {
+    NSUserDefaults.standardUserDefaults
+        .setObject(listOf(langCode), "AppleLanguages")
+}
+
+private fun handleCenterCommands(onCommand: (PlayerAction) -> Unit) {
+    MPRemoteCommandCenter.sharedCommandCenter().apply {
+        playCommand.addTargetWithHandler {
+            onCommand(PlayerAction.Play)
+            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+        }
+        pauseCommand.addTargetWithHandler {
+            onCommand(PlayerAction.Pause)
+            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+        }
+        nextTrackCommand.addTargetWithHandler {
+            onCommand(PlayerAction.Next)
+            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+        }
+        previousTrackCommand.addTargetWithHandler {
+            onCommand(PlayerAction.Previous)
+            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+        }
+        changePlaybackPositionCommand.addTargetWithHandler { event ->
+            onCommand(
+                (event as? MPChangePlaybackPositionCommandEvent)
+                    ?.positionTime?.toLong()
+                    ?.let { PlayerAction.SeekTo(it * 1000) }
+                    ?: return@addTargetWithHandler MPRemoteCommandHandlerStatusCommandFailed
+            )
+
+            return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
         }
     }
 }

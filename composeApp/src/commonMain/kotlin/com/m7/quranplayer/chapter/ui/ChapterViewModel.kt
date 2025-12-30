@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.core.di.setLocale
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
@@ -17,6 +16,7 @@ import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,8 +36,11 @@ class ChapterViewModel(
     private val downloaderRepo: DownloaderRepo,
 ) : ViewModel() {
 
-    fun changeLanguage(code: String) {
-        setLocale(code)
+    fun onLanguageChanged() {
+        viewModelScope.launch {
+            delay(50)
+            buildChapters()
+        }
     }
 
     private val originalChapters = MutableStateFlow<List<Chapter>>(emptyList())
@@ -181,12 +184,13 @@ class ChapterViewModel(
     // player
     val playerState: StateFlow<PlayerState> = playerRepo.playerState
         .onEach {
-            if (it is PlayerState.Ended)
+            if (it is PlayerState.Ended) {
                 if (isRepeatEnabled) {
                     playerAction(PlayerAction.Repeat)
                 } else {
                     playerAction(PlayerAction.Next)
                 }
+            }
         }
         .stateIn(
             scope = viewModelScope,
@@ -206,8 +210,10 @@ class ChapterViewModel(
             when (action) {
                 PlayerAction.Pause -> playerRepo.pause()
                 is PlayerAction.Play -> play()
-                is PlayerAction.Next -> next()
-                is PlayerAction.Previous -> previous()
+                is PlayerAction.Next,
+                is PlayerAction.Next.WithId -> next()
+                is PlayerAction.Previous,
+                is PlayerAction.Previous.WithId -> previous()
                 is PlayerAction.Repeat -> playerRepo.repeat()
                 is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
             }
@@ -217,7 +223,9 @@ class ChapterViewModel(
     private fun play() {
         viewModelScope.launch {
             if (selectedChapterIndx > -1) {
-                playerRepo.play(chapters.value[selectedChapterIndx].id)
+                chapters.value[selectedChapterIndx].let {
+                    playerRepo.play(it.id, it.title)
+                }
             }
         }
     }
@@ -226,7 +234,9 @@ class ChapterViewModel(
         viewModelScope.launch {
             if (selectedChapterIndx < chapters.value.lastIndex) {
                 selectedChapterIndx++
-                playerRepo.play(chapters.value[selectedChapterIndx].id)
+                chapters.value[selectedChapterIndx].let {
+                    playerRepo.play(it.id, it.title)
+                }
             }
         }
     }
@@ -235,7 +245,9 @@ class ChapterViewModel(
         viewModelScope.launch {
             if (selectedChapterIndx > 0) {
                 selectedChapterIndx--
-                playerRepo.play(chapters.value[selectedChapterIndx].id)
+                chapters.value[selectedChapterIndx].let {
+                    playerRepo.play(it.id, it.title)
+                }
             }
         }
     }

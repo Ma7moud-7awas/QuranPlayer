@@ -153,7 +153,7 @@ class IOSPlayerSource() : PlayerSource {
     private fun CValue<CMTime>.toSeconds(): Double =
         CMTimeGetSeconds(this)
 
-    override suspend fun setItem(id: String) {
+    fun setItem(id: String) {
         player.currentItem?.removeObserver(playerItemObserver, "status")
 
         URLWithString(DownloadManager.getDownloadUrl(id))?.also {
@@ -169,7 +169,7 @@ class IOSPlayerSource() : PlayerSource {
         }
     }
 
-    override suspend fun play(id: String) {
+    override suspend fun play(id: String, title: String) {
         if (currentItemId != id
             || player.currentItem == null
             || player.currentItem?.status == AVPlayerItemStatusFailed

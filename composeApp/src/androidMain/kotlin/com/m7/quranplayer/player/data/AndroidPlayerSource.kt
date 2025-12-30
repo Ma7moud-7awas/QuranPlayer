@@ -3,6 +3,7 @@ package com.m7.quranplayer.player.data
 import android.content.ComponentName
 import android.content.Context
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -11,12 +12,15 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.data.Url
-import com.m7.quranplayer.player.PlayerService
 import com.m7.quranplayer.player.domain.model.PlayerState
+import com.m7.quranplayer.player.ui.PlayerService
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.compose.resources.getString
+import quranplayer.composeapp.generated.resources.Res
+import quranplayer.composeapp.generated.resources.saad_al_ghamdy
 
 class AndroidPlayerSource(private val context: Context) : PlayerSource {
 
@@ -116,12 +120,23 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
         })
     }
 
-    override suspend fun setItem(id: String) {
+    suspend fun setItem(id: String, title: String) {
         currentItemId = id
-        getPlayer().setMediaItem(MediaItem.fromUri(Url.getDownloadUrlById(id)))
+        getPlayer().setMediaItem(
+            MediaItem.Builder()
+                .setMediaId(id)
+                .setUri(Url.getDownloadUrlById(id))
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setArtist(getString(Res.string.saad_al_ghamdy))
+                        .setTitle(title)
+                        .build()
+                )
+                .build()
+        )
     }
 
-    override suspend fun play(id: String) {
+    override suspend fun play(id: String, title: String) {
         getPlayer().apply {
             playerError?.also {
                 // reset the player if there is an error to start over
@@ -130,7 +145,7 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
 
             if (currentItemId != id || currentMediaItem == null) {
                 // start new media item
-                setItem(id)
+                setItem(id, title)
             } else if (currentItemId == id && isCurrentItemEnded) {
                 // replay the current media item
                 seekTo(0)

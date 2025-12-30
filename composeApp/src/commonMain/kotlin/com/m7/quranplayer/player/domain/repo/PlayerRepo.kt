@@ -7,9 +7,7 @@ interface PlayerRepo {
 
     val playerState: Flow<PlayerState>
 
-    suspend fun setItem(id: String)
-
-    suspend fun play(id: String)
+    suspend fun play(id: String, title: String)
 
     suspend fun pause()
 
