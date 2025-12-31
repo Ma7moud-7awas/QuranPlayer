@@ -1,13 +1,20 @@
 package com.m7.quranplayer.player.data
 
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.channels.Channel
 
 interface PlayerSource {
 
-    val playerState: Channel<PlayerState>
+    val playerState: Channel<Pair<String?, PlayerState>>
 
-    suspend fun play(id: String, title: String)
+    val playerAction: Channel<PlayerAction>
+
+    suspend fun play(items: List<PlayerItem>)
+
+    suspend fun previous(items: List<PlayerItem>)
+
+    suspend fun next()
 
     suspend fun pause()
 

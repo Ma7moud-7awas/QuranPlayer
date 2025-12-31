@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -51,6 +52,10 @@ class ChapterViewModel(
         buildChapters()
 
         viewModelScope.launch(Dispatchers.Default) {
+            // route media center actions
+            playerRepo.playerAction.collectLatest { playerAction(it) }
+
+            // update download state
             downloaderRepo.downloadState.collect { (downloadId, state) ->
                 if (state == DownloadState.NotDownloaded
                     || state is DownloadState.Paused
@@ -165,7 +170,7 @@ class ChapterViewModel(
                 playerAction(PlayerAction.Pause)
             }
 
-            selectedChapterIndx if playerState.value is PlayerState.Playing -> {
+            selectedChapterIndx if playerState.value.second is PlayerState.Playing -> {
                 // pause the same chapter.
                 playerAction(PlayerAction.Pause)
             }
@@ -178,21 +183,22 @@ class ChapterViewModel(
         }
     }
 
-    // player
-    val playerState: StateFlow<PlayerState> = playerRepo.playerState
-        .onEach {
-            if (it is PlayerState.Ended) {
+    val playerState: StateFlow<Pair<String?, PlayerState>> = playerRepo.playerState
+        .onEach { (id, state) ->
+            id?.also {
+                selectedChapterIndx = chapters.value.indexOfFirst { it.id == id }
+            }
+
+            if (state is PlayerState.Ended) {
                 if (isRepeatEnabled) {
                     playerAction(PlayerAction.Repeat)
-                } else {
-                    playerAction(PlayerAction.Next)
                 }
             }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PlayerState.Idle
+            initialValue = null to PlayerState.Idle
         )
 
     var isRepeatEnabled by mutableStateOf(false)
@@ -207,6 +213,7 @@ class ChapterViewModel(
             when (action) {
                 PlayerAction.Pause -> playerRepo.pause()
                 is PlayerAction.Play -> play()
+
                 is PlayerAction.Next,
                 is PlayerAction.Next.WithId -> next()
 
@@ -222,19 +229,8 @@ class ChapterViewModel(
     private fun play() {
         viewModelScope.launch {
             if (selectedChapterIndx > -1) {
-                chapters.value[selectedChapterIndx].let {
-                    playerRepo.play(it.id, it.title)
-                }
-            }
-        }
-    }
-
-    private fun next() {
-        viewModelScope.launch {
-            if (selectedChapterIndx < chapters.value.lastIndex) {
-                selectedChapterIndx++
-                chapters.value[selectedChapterIndx].let {
-                    playerRepo.play(it.id, it.title)
+                chapters.value.subList(selectedChapterIndx, chapters.value.size).let {
+                    playerRepo.play(it)
                 }
             }
         }
@@ -244,9 +240,18 @@ class ChapterViewModel(
         viewModelScope.launch {
             if (selectedChapterIndx > 0) {
                 selectedChapterIndx--
-                chapters.value[selectedChapterIndx].let {
-                    playerRepo.play(it.id, it.title)
+                chapters.value.subList(selectedChapterIndx, chapters.value.size).let {
+                    playerRepo.previous(it)
                 }
+            }
+        }
+    }
+
+    private fun next() {
+        viewModelScope.launch {
+            if (selectedChapterIndx < chapters.value.lastIndex) {
+                selectedChapterIndx++
+                playerRepo.next()
             }
         }
     }

@@ -49,7 +49,7 @@ object PlayerProvider {
 
     private var forwardingPlayer: ForwardingPlayer? = null
 
-    fun buildForwardingPlayer(
+    fun initForwardingPlayer(
         context: Context,
         onPrevious: () -> Unit,
         onNext: () -> Unit

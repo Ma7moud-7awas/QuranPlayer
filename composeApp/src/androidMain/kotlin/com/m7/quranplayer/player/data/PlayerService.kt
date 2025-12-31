@@ -1,4 +1,4 @@
-package com.m7.quranplayer.player.ui
+package com.m7.quranplayer.player.data
 
 import android.content.Intent
 import androidx.annotation.OptIn

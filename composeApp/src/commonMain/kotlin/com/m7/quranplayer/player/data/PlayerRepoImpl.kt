@@ -1,5 +1,7 @@
 package com.m7.quranplayer.player.data
 
+import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,12 +15,27 @@ class PlayerRepoImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : PlayerRepo {
 
-    override val playerState: Flow<PlayerState> =
+    override val playerState: Flow<Pair<String?, PlayerState>> =
         playerSource.playerState.receiveAsFlow()
 
-    override suspend fun play(id: String, title: String) {
+    override val playerAction: Flow<PlayerAction> =
+        playerSource.playerAction.receiveAsFlow()
+
+    override suspend fun play(items: List<Chapter>) {
         withContext(dispatcher) {
-            playerSource.play(id, title)
+            playerSource.play(items.toPlayerItems())
+        }
+    }
+
+    override suspend fun previous(items: List<Chapter>) {
+        withContext(dispatcher) {
+            playerSource.previous(items.toPlayerItems())
+        }
+    }
+
+    override suspend fun next() {
+        withContext(dispatcher) {
+            playerSource.next()
         }
     }
 

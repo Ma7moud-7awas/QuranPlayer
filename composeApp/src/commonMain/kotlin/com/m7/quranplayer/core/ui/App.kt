@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -34,12 +33,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.ui.ChapterListScreen
 import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
-import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -48,13 +45,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 import quranplayer.composeapp.generated.resources.check_device_connection
-import quranplayer.composeapp.generated.resources.saad_al_ghamdy
 
 @Composable
 fun App(
-    onLanguageChanged: (String) -> Unit,
-    playerCenterAction: () -> PlayerAction?,
-    onStateChanged: (PlayerState, Chapter?) -> Unit
+    onLanguageChanged: (String) -> Unit
 ) {
     QuranPlayerTheme {
         val listState = rememberLazyListState()
@@ -94,15 +88,11 @@ fun App(
             ChapterListScreen(
                 listState,
                 changeLanguage = onLanguageChanged,
-                playerCenterAction = playerCenterAction,
-                onStateChanged = { playerState, chapter ->
-                    onStateChanged(playerState, chapter)
-                    error = if (playerState is PlayerState.Error)
-                        playerState.error?.message else null
+                onStateChanged = {
+                    error = if (it is PlayerState.Error)
+                        it.error?.message else null
                 },
-                onSelectedItemChanged = {
-                    selectedIndex = it
-                },
+                onSelectedItemChanged = { selectedIndex = it },
                 modifier = Modifier.padding(innerPadding)
             )
         }

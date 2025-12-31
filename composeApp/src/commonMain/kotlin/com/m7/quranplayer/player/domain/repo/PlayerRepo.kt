@@ -1,13 +1,22 @@
 package com.m7.quranplayer.player.domain.repo
 
+import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.player.data.PlayerItem
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.flow.Flow
 
 interface PlayerRepo {
 
-    val playerState: Flow<PlayerState>
+    val playerState: Flow<Pair<String?, PlayerState>>
 
-    suspend fun play(id: String, title: String)
+    val playerAction: Flow<PlayerAction>
+
+    suspend fun play(items: List<Chapter>)
+
+    suspend fun previous(items: List<Chapter>)
+
+    suspend fun next()
 
     suspend fun pause()
 

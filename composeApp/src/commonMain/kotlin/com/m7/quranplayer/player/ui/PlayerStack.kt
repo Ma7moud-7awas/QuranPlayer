@@ -60,7 +60,7 @@ fun PlayerStackPreview_Playing() {
     PlayerStack(
         isSelected = { true },
         isPlaying = { true },
-        playerState = { PlayerState.Playing(100, flowOf( 30)) },
+        playerState = { PlayerState.Playing(100, flowOf(30)) },
         playerAction = {},
         isRepeatEnabled = { false },
         onRepeatClicked = {}
@@ -90,7 +90,7 @@ fun PlayerStack(
     onRepeatClicked: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OptionsStack(isSelected(), modifier) {
+    OptionsStack(isSelected(), modifier, animateExit = false) {
         var totalMillis by remember { mutableLongStateOf(0) }
         val totalDuration = (totalMillis / 1000).toDuration(DurationUnit.SECONDS)
 
