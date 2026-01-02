@@ -1,5 +1,6 @@
 package com.m7.quranplayer.downloader.data
 
+import com.m7.quranplayer.core.data.Url
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,16 +14,6 @@ class DownloaderRepoImpl(
     private val downloaderSource: DownloaderSource,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : DownloaderRepo {
-
-    private companion object {
-        // ex: https://server7.mp3quran.net/s_gmd/001.mp3
-        private const val BASE_URL = "https://server7.mp3quran.net/s_gmd/"
-        private const val EXTENSION = ".mp3"
-
-        fun mapIdToUrl(id: String): String {
-            return BASE_URL + id + EXTENSION
-        }
-    }
 
     override val downloadState: Flow<Pair<String, DownloadState>> =
         downloaderSource.downloadState.receiveAsFlow()
@@ -41,7 +32,7 @@ class DownloaderRepoImpl(
 
     override suspend fun start(id: String) {
         withContext(dispatcher) {
-            downloaderSource.start(id, mapIdToUrl(id))
+            downloaderSource.start(id, Url.getDownloadUrlById(id))
         }
     }
 

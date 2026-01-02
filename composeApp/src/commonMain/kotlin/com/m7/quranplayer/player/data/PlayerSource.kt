@@ -6,13 +6,16 @@ import kotlinx.coroutines.channels.Channel
 
 interface PlayerSource {
 
-    val playerState: Channel<Pair<String?, PlayerState>>
+    val playerState: Channel<Pair<Int, PlayerState>>
 
+    /** route media center actions */
     val playerAction: Channel<PlayerAction>
 
-    suspend fun play(items: List<PlayerItem>)
+    suspend fun setPlaylist(items: List<PlayerItem>)
 
-    suspend fun previous(items: List<PlayerItem>)
+    suspend fun play(selectedIndex: Int)
+
+    suspend fun previous()
 
     suspend fun next()
 
@@ -20,7 +23,7 @@ interface PlayerSource {
 
     suspend fun seekTo(positionMs: Long)
 
-    suspend fun repeat()
+    suspend fun enableRepeat(enable: Boolean)
 
     suspend fun release()
 }

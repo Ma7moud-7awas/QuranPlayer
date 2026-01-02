@@ -13,6 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.CleanHands
+import androidx.compose.material.icons.rounded.CleaningServices
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Language
@@ -44,6 +51,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.intl.Locale
@@ -121,10 +129,14 @@ fun ChaptersToolbar(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val (menuExpanded, expandMenu) = rememberSaveable { mutableStateOf(false) }
+        val (menuExpanded, expandMenu) = remember { mutableStateOf(false) }
 
-        var searchText by rememberSaveable { mutableStateOf("") }
+        val keyboardController = LocalSoftwareKeyboardController.current
         val focusRequester = remember { FocusRequester() }
+        var searchText by rememberSaveable { mutableStateOf("") }
+        val searchIcon =
+            if (searchExpanded()) Icons.AutoMirrored.Rounded.ArrowForward
+            else Icons.Rounded.Search
 
         LaunchedEffect(searchExpanded) {
             // show keyboard
@@ -155,7 +167,11 @@ fun ChaptersToolbar(
                         )
                     },
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { onSearch(searchText) }),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            keyboardController?.hide()
+                            onSearch(searchText)
+                        }),
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .weight(1f)
@@ -184,7 +200,7 @@ fun ChaptersToolbar(
                     onExpandSearch(expand)
                 },
             ) {
-                Icon(Icons.Rounded.Search, "Search")
+                Icon(searchIcon, "Toggle Search")
             }
 
             // menu toggle

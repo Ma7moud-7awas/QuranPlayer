@@ -1,7 +1,11 @@
 package com.m7.quranplayer.core.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
@@ -25,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -51,8 +56,8 @@ fun App(
     onLanguageChanged: (String) -> Unit
 ) {
     QuranPlayerTheme {
-        val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
         var selectedIndex by remember { mutableIntStateOf(-1) }
         val isPlayingItemInvisible by remember {
             derivedStateOf {
@@ -64,7 +69,7 @@ fun App(
 
         Scaffold(
             floatingActionButton = {
-                // scroll to the playing item
+                // error/scroll indicator
                 if (error != null) {
                     ErrorButton()
                 } else if (isPlayingItemInvisible) {
@@ -84,16 +89,28 @@ fun App(
                 contentDescription = null
             )
 
-            // list
+            // content
             ChapterListScreen(
                 listState,
+                innerPadding = innerPadding,
                 changeLanguage = onLanguageChanged,
                 onStateChanged = {
                     error = if (it is PlayerState.Error)
                         it.error?.message else null
                 },
                 onSelectedItemChanged = { selectedIndex = it },
-                modifier = Modifier.padding(innerPadding)
+            )
+
+            // status bar background
+            Spacer(
+                Modifier.fillMaxWidth()
+                    .height(40.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            .4f to Color.White,
+                            1f to Color.Transparent,
+                        )
+                    )
             )
         }
     }

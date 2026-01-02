@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.ForwardingPlayer
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.cache.CacheDataSource
@@ -21,7 +19,7 @@ object PlayerProvider {
 
     private var exoPlayer: ExoPlayer? = null
 
-    private fun getBasePlayer(context: Context): ExoPlayer {
+    fun getPlayer(context: Context): ExoPlayer {
         return exoPlayer ?: run {
             val cacheDataSourceFactory: DataSource.Factory =
                 CacheDataSource.Factory()
@@ -45,36 +43,5 @@ object PlayerProvider {
                     exoPlayer = it
                 }
         }
-    }
-
-    private var forwardingPlayer: ForwardingPlayer? = null
-
-    fun initForwardingPlayer(
-        context: Context,
-        onPrevious: () -> Unit,
-        onNext: () -> Unit
-    ) {
-        forwardingPlayer = object : ForwardingPlayer(getBasePlayer(context)) {
-            override fun getAvailableCommands(): Player.Commands {
-                return super.getAvailableCommands().buildUpon()
-                    .add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                    .add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-                    .build()
-            }
-
-            override fun seekToPreviousMediaItem() {
-                onPrevious()
-                super.seekToPreviousMediaItem()
-            }
-
-            override fun seekToNextMediaItem() {
-                onNext()
-                super.seekToNextMediaItem()
-            }
-        }
-    }
-
-    fun getPlayer(context: Context): Player {
-        return forwardingPlayer ?: getBasePlayer(context)
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
+import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
@@ -52,11 +53,13 @@ class ChapterViewModel(
         buildChapters()
 
         viewModelScope.launch(Dispatchers.Default) {
-            // route media center actions
             playerRepo.playerAction.collectLatest { playerAction(it) }
+        }
 
+        viewModelScope.launch(Dispatchers.Default) {
             // update download state
             downloaderRepo.downloadState.collect { (downloadId, state) ->
+                Log("downloadId= $downloadId - state= $state")
                 if (state == DownloadState.NotDownloaded
                     || state is DownloadState.Paused
                     || state is DownloadState.Error
@@ -64,18 +67,16 @@ class ChapterViewModel(
                     downloadedAllEnabled = true
                 }
 
-                viewModelScope.launch(Dispatchers.Default) {
-                    originalChapters.updateAndGet {
-                        it.map { chapter ->
-                            if (chapter.id == downloadId)
-                                chapter.copy(downloadState = state) else chapter
-                        }
-                    }.also { newChapters ->
-                        chapters.update { newChapters }
+                originalChapters.updateAndGet {
+                    it.map { chapter ->
+                        if (chapter.id == downloadId)
+                            chapter.copy(downloadState = state) else chapter
                     }
-
-                    updateDownloadedCount()
+                }.also { newChapters ->
+                    chapters.update { newChapters }
                 }
+
+                updateDownloadedCount()
             }
         }
     }
@@ -94,7 +95,7 @@ class ChapterViewModel(
                     }
                 )
             }.also { newChapters ->
-                chapters.update { newChapters }
+                updateChapters(newChapters)
             }
 
             updateDownloadedCount()
@@ -111,18 +112,16 @@ class ChapterViewModel(
                         .filter {
                             it.title.contains(searchName, ignoreCase = true)
                         }.also { searchedChapters ->
-                            chapters.update {
-                                // reset player
-                                setSelectedIndex(-1)
-                                searchedChapters
-                            }
+                            updateChapters(searchedChapters)
                         }
-                } ?: chapters.update {
-                // reset player
-                setSelectedIndex(-1)
-                originalChapters.value
-            }
+                } ?: updateChapters(originalChapters.value)
         }
+    }
+
+    private suspend fun updateChapters(newChapters: List<Chapter>) {
+        chapters.update { newChapters }
+        playerRepo.setPlaylist(newChapters)
+        setSelectedIndex(-1)
     }
 
     var downloadedChaptersCount by mutableIntStateOf(0)
@@ -165,7 +164,7 @@ class ChapterViewModel(
     fun setSelectedIndex(indx: Int) {
         when (indx) {
             -1 -> {
-                // deselect state.
+                // deselect state. "reset"
                 selectedChapterIndx = indx
                 playerAction(PlayerAction.Pause)
             }
@@ -183,44 +182,29 @@ class ChapterViewModel(
         }
     }
 
-    val playerState: StateFlow<Pair<String?, PlayerState>> = playerRepo.playerState
-        .onEach { (id, state) ->
-            id?.also {
-                selectedChapterIndx = chapters.value.indexOfFirst { it.id == id }
-            }
-
-            if (state is PlayerState.Ended) {
-                if (isRepeatEnabled) {
-                    playerAction(PlayerAction.Repeat)
-                }
-            }
-        }
+    val playerState: StateFlow<Pair<Int?, PlayerState>> = playerRepo.playerState
+        .onEach { (idx, state) -> selectedChapterIndx = idx }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = null to PlayerState.Idle
         )
 
-    var isRepeatEnabled by mutableStateOf(false)
+    var repeatEnabled by mutableStateOf(false)
         private set
-
-    fun onRepeatClicked(enabled: Boolean) {
-        isRepeatEnabled = enabled
-    }
 
     fun playerAction(action: PlayerAction) {
         viewModelScope.launch {
             when (action) {
                 PlayerAction.Pause -> playerRepo.pause()
                 is PlayerAction.Play -> play()
+                is PlayerAction.Next -> next()
+                is PlayerAction.Previous -> previous()
+                is PlayerAction.Repeat -> {
+                    repeatEnabled = action.enable
+                    playerRepo.enableRepeat(action.enable)
+                }
 
-                is PlayerAction.Next,
-                is PlayerAction.Next.WithId -> next()
-
-                is PlayerAction.Previous,
-                is PlayerAction.Previous.WithId -> previous()
-
-                is PlayerAction.Repeat -> playerRepo.repeat()
                 is PlayerAction.SeekTo -> playerRepo.seekTo(action.positionMs)
             }
         }
@@ -229,9 +213,7 @@ class ChapterViewModel(
     private fun play() {
         viewModelScope.launch {
             if (selectedChapterIndx > -1) {
-                chapters.value.subList(selectedChapterIndx, chapters.value.size).let {
-                    playerRepo.play(it)
-                }
+                playerRepo.play(selectedChapterIndx)
             }
         }
     }
@@ -240,9 +222,7 @@ class ChapterViewModel(
         viewModelScope.launch {
             if (selectedChapterIndx > 0) {
                 selectedChapterIndx--
-                chapters.value.subList(selectedChapterIndx, chapters.value.size).let {
-                    playerRepo.previous(it)
-                }
+                playerRepo.previous()
             }
         }
     }

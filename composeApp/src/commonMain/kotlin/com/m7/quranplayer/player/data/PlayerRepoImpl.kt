@@ -15,21 +15,27 @@ class PlayerRepoImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : PlayerRepo {
 
-    override val playerState: Flow<Pair<String?, PlayerState>> =
+    override val playerState: Flow<Pair<Int, PlayerState>> =
         playerSource.playerState.receiveAsFlow()
 
     override val playerAction: Flow<PlayerAction> =
         playerSource.playerAction.receiveAsFlow()
 
-    override suspend fun play(items: List<Chapter>) {
+    override suspend fun setPlaylist(items: List<Chapter>) {
         withContext(dispatcher) {
-            playerSource.play(items.toPlayerItems())
+            playerSource.setPlaylist(items.toPlayerItems())
         }
     }
 
-    override suspend fun previous(items: List<Chapter>) {
+    override suspend fun play(selectedIndex: Int) {
         withContext(dispatcher) {
-            playerSource.previous(items.toPlayerItems())
+            playerSource.play(selectedIndex)
+        }
+    }
+
+    override suspend fun previous() {
+        withContext(dispatcher) {
+            playerSource.previous()
         }
     }
 
@@ -51,9 +57,9 @@ class PlayerRepoImpl(
         }
     }
 
-    override suspend fun repeat() {
+    override suspend fun enableRepeat(enable: Boolean) {
         withContext(dispatcher) {
-            playerSource.repeat()
+            playerSource.enableRepeat(enable)
         }
     }
 

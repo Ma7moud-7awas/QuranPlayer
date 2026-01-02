@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,6 +70,7 @@ private fun ChapterListScreenPreview() {
 @Composable
 fun ChapterListScreen(
     listState: LazyListState,
+    innerPadding: PaddingValues,
     changeLanguage: (String) -> Unit,
     onStateChanged: (PlayerState) -> Unit,
     onSelectedItemChanged: (Int) -> Unit,
@@ -89,7 +91,10 @@ fun ChapterListScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp),
+        contentPadding = PaddingValues(
+            top = innerPadding.calculateTopPadding(),
+            bottom = 120.dp
+        ),
         state = listState
     ) {
         item(key = Res.string.chapters.key) {
@@ -114,8 +119,7 @@ fun ChapterListScreen(
                 playerState = { playerState.second },
                 playerAction = chapterViewModel::playerAction,
                 downloaderAction = chapterViewModel::downloaderAction,
-                isRepeatEnabled = { chapterViewModel.isRepeatEnabled },
-                onRepeatClicked = chapterViewModel::onRepeatClicked,
+                isRepeatEnabled = { chapterViewModel.repeatEnabled },
                 onCardClicked = { chapterViewModel.setSelectedIndex(i) }
             )
         }
@@ -135,7 +139,6 @@ private fun ChapterItemPreview() {
             playerAction = {},
             downloaderAction = { _, _ -> },
             isRepeatEnabled = { false },
-            onRepeatClicked = {},
             onCardClicked = {}
         )
     }
@@ -149,7 +152,6 @@ fun ChapterItem(
     playerAction: (PlayerAction) -> Unit,
     downloaderAction: (String, DownloaderAction) -> Unit,
     isRepeatEnabled: () -> Boolean,
-    onRepeatClicked: (Boolean) -> Unit,
     onCardClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -166,8 +168,7 @@ fun ChapterItem(
             isPlaying = isPlaying,
             playerState = playerState,
             playerAction = playerAction,
-            isRepeatEnabled = isRepeatEnabled,
-            onRepeatClicked = onRepeatClicked
+            repeatEnabled = isRepeatEnabled,
         )
 
         ChapterCard(

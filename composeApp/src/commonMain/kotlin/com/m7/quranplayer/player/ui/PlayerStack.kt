@@ -62,8 +62,7 @@ fun PlayerStackPreview_Playing() {
         isPlaying = { true },
         playerState = { PlayerState.Playing(100, flowOf(30)) },
         playerAction = {},
-        isRepeatEnabled = { false },
-        onRepeatClicked = {}
+        repeatEnabled = { false },
     )
 }
 
@@ -75,8 +74,7 @@ fun PlayerStackPreview_Paused() {
         isPlaying = { false },
         playerState = { PlayerState.Paused },
         playerAction = {},
-        isRepeatEnabled = { false },
-        onRepeatClicked = {}
+        repeatEnabled = { false },
     )
 }
 
@@ -86,11 +84,10 @@ fun PlayerStack(
     isPlaying: () -> Boolean,
     playerState: () -> PlayerState,
     playerAction: (PlayerAction) -> Unit,
-    isRepeatEnabled: () -> Boolean,
-    onRepeatClicked: (Boolean) -> Unit,
+    repeatEnabled: () -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    OptionsStack(isSelected(), modifier, animateExit = false) {
+    OptionsStack(isSelected(), modifier) {
         var totalMillis by remember { mutableLongStateOf(0) }
         val totalDuration = (totalMillis / 1000).toDuration(DurationUnit.SECONDS)
 
@@ -216,8 +213,8 @@ fun PlayerStack(
 
                 // repeat
                 IconToggleButton(
-                    checked = isRepeatEnabled(),
-                    onCheckedChange = onRepeatClicked,
+                    checked = repeatEnabled(),
+                    onCheckedChange = { playerAction(PlayerAction.Repeat(it)) },
                     modifier = Modifier
                         .padding(end = 30.dp)
                         .border(.5.dp, Color.LightGray, RoundedCornerShape(50))

@@ -1,15 +1,17 @@
 package com.m7.quranplayer.player.data
 
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.core.Log.log
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
@@ -25,7 +27,6 @@ import platform.AVFoundation.seekToTime
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSKeyValueChangeNewKey
 import platform.Foundation.NSKeyValueObservingOptionNew
-import platform.Foundation.NSKeyValueObservingOptionOld
 import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
 import platform.darwin.NSObject
@@ -36,11 +37,17 @@ class IOSPlayerSource() : PlayerSource {
 
     private var player: AVQueuePlayer? = null
 
-    override val playerState: Channel<Pair<String?, PlayerState>> = Channel(CONFLATED)
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+    override val playerState: Channel<Pair<Int, PlayerState>> = Channel(CONFLATED)
 
     override val playerAction: Channel<PlayerAction> = Channel(CONFLATED)
 
-    private var currentItem: PlayerItem? = null
+    private var playerItems: List<PlayerItem> = listOf()
+    private var currentItemIndex = -1
+    private var repeatMode = RepeatMode.None
+    private var callingNext = false
+
     private var playerRateObserver = NSObject()
     private var itemStatusObserver = NSObject()
     private var currentItemObserver = NSObject()
@@ -50,11 +57,6 @@ class IOSPlayerSource() : PlayerSource {
         initObservers()
 
         MediaCenterManager.handleCenterCommands { playerAction.trySend(it) }
-    }
-
-    private fun sendState(state: PlayerState) {
-        playerState.trySend(currentItem?.id to state)
-        MediaCenterManager.bindCenterInfo(state, currentItem?.title)
     }
 
     private fun initObservers() {
@@ -67,7 +69,7 @@ class IOSPlayerSource() : PlayerSource {
             ) {
                 if (keyPath == "rate") {
                     player?.also {
-                        Log("PlayerSource -> player: rate= ${it.rate}")
+                        Log("RateObserver -> rate= ${it.rate}")
                         when {
                             it.rate > 0 -> checkItemStatus()
 
@@ -95,6 +97,7 @@ class IOSPlayerSource() : PlayerSource {
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
+                Log("StatusObserver -> status= $change")
                 if (keyPath == "status") {
                     checkItemStatus()
                 }
@@ -108,39 +111,58 @@ class IOSPlayerSource() : PlayerSource {
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
+                Log("currentItemObserver -> currentItem= $change")
                 if (keyPath == "currentItem") {
-                    (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)?.let { newItem ->
-                        newItem.getId().also { id ->
-                            id.log("new id = ")
-                            if (id != currentItem?.id) {
-                                currentItem = newItem.toPlayerItem()
-                                sendPlayState()
+                    (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
+                        .let { newItem ->
+                            player?.pause()
+
+                            newItem?.toPlayerItem()?.let {
+                                // updating index
+                                currentItemIndex = playerItems.indexOf(it)
+                                // add observer to the new item
+                                addItemStatusObserver(newItem)
+
+                                if (!callingNext && repeatMode == RepeatMode.One) {
+                                    // reselect & play the previous item
+                                    scope.launch { previous() }
+                                } else {
+                                    callingNext = false
+                                    // play the new item
+                                    player?.play()
+                                }
                             }
                         }
-                    }
                 }
             }
         }
     }
 
     private fun addObservers() {
-        player?.addObserver(
-            playerRateObserver,
-            "rate",
-            NSKeyValueObservingOptionNew + NSKeyValueObservingOptionOld,
-            null
-        )
+        player?.let {
+            it.addObserver(
+                playerRateObserver,
+                "rate",
+                NSKeyValueObservingOptionNew,
+                null
+            )
 
-        player?.currentItem?.addObserver(
+            it.addObserver(
+                currentItemObserver,
+                "currentItem",
+                NSKeyValueObservingOptionNew,
+                null
+            )
+
+            addItemStatusObserver(it.currentItem)
+        }
+    }
+
+    private fun addItemStatusObserver(item: AVPlayerItem?) {
+        Log("addItemStatusObserver ->")
+        item?.addObserver(
             itemStatusObserver,
             "status",
-            NSKeyValueObservingOptionNew + NSKeyValueObservingOptionOld,
-            null
-        )
-
-        player?.addObserver(
-            currentItemObserver,
-            "currentItem",
             NSKeyValueObservingOptionNew,
             null
         )
@@ -148,30 +170,37 @@ class IOSPlayerSource() : PlayerSource {
 
     private fun removeObservers() {
         player?.also {
-            it.currentItem?.removeObserver(itemStatusObserver, "status")
-            it.removeObserver(currentItemObserver, "currentItem")
             it.removeObserver(playerRateObserver, "rate")
+            it.removeObserver(currentItemObserver, "currentItem")
+            it.currentItem?.removeObserver(itemStatusObserver, "status")
         }
     }
 
     private fun checkItemStatus() {
         when (player?.currentItem?.status) {
             AVPlayerItemStatusReadyToPlay -> {
-                Log("PlayerSource -> item status= ${player?.currentItem?.status} - ReadyToPlay")
-                sendPlayState()
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - ReadyToPlay")
+                if (currentItemIndex != -1)
+                    sendPlayState()
             }
 
             AVPlayerItemStatusFailed -> {
-                Log("PlayerSource -> item status= ${player?.currentItem?.status} - Failed")
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Failed")
                 player?.removeAllItems()
                 sendErrorState()
             }
 
             else -> { // handle unknown/buffering states
-                Log("PlayerSource -> item status= ${player?.currentItem?.status} - Unknown")
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Unknown")
                 sendState(PlayerState.Loading)
             }
         }
+    }
+
+    private fun sendState(state: PlayerState) {
+        Log("sendState -> state = $state - idx = $currentItemIndex")
+        playerState.trySend(currentItemIndex to state)
+        MediaCenterManager.bindCenterInfo(state, playerItems[currentItemIndex].title)
     }
 
     private fun sendPlayState() {
@@ -202,37 +231,43 @@ class IOSPlayerSource() : PlayerSource {
         )
     }
 
-    private fun setItems(items: List<PlayerItem>) {
-        player?.removeAllItems()
+    override suspend fun setPlaylist(items: List<PlayerItem>) {
+        playerItems = items
+    }
+
+    private fun resetPlayer(items: List<PlayerItem>) {
         removeObservers()
+        player?.removeAllItems()
 
-        val avItems = items.map { it.toAVPlayerItem() }
-        player = AVQueuePlayer(avItems)
-
+        player = AVQueuePlayer(items.map { it.toAVPlayerItem() })
         addObservers()
     }
 
-    override suspend fun play(items: List<PlayerItem>) {
-        val firstItem = items.firstOrNull() ?: return
-
-        if (firstItem.id != player?.currentItem?.getId()) {
-            // start new queue
-            setItems(items)
-            currentItem = firstItem
-        }
+    override suspend fun play(selectedIndex: Int) {
+        if (selectedIndex != currentItemIndex)
+            getQueueByStartIndex(selectedIndex).let {
+                currentItemIndex = selectedIndex
+                resetPlayer(it)
+            }
 
         player?.play()
+    }
+
+    private fun getQueueByStartIndex(idx: Int): List<PlayerItem> {
+        return playerItems.subList(idx, playerItems.size)
     }
 
     override suspend fun pause() {
         player?.pause()
     }
 
-    override suspend fun previous(items: List<PlayerItem>) {
-        play(items)
+    override suspend fun previous() {
+        if (currentItemIndex > 0)
+            play(currentItemIndex - 1)
     }
 
     override suspend fun next() {
+        callingNext = true
         player?.advanceToNextItem()
     }
 
@@ -243,13 +278,13 @@ class IOSPlayerSource() : PlayerSource {
         }
     }
 
-    override suspend fun repeat() {
-        seekTo(0)
+    override suspend fun enableRepeat(enable: Boolean) {
+        repeatMode = if (enable) RepeatMode.One else RepeatMode.None
     }
 
     override suspend fun release() {
         removeObservers()
         player?.finalize()
-        currentItem = null
+        player = null
     }
 }
