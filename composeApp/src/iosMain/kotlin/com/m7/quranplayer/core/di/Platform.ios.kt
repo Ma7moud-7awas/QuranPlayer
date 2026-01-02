@@ -26,6 +26,5 @@ actual fun Int.format(format: String) = NSString.stringWithFormat(format, this)
 actual fun Int.localize(format: String): String =
     NSString.create(format, locale = NSLocale.current(), this).toString()
 
-fun NSLocaleMeta.current(): NSLocale {
-    return localeWithLocaleIdentifier(preferredLanguages().first().toString())
-}
+fun NSLocaleMeta.current(): NSLocale =
+    localeWithLocaleIdentifier(preferredLanguages().first().toString() + "-EG")
