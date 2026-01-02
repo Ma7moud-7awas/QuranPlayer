@@ -6,14 +6,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.data.Url
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
-import com.m7.quranplayer.player.ui.PlayerService
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
@@ -21,66 +21,59 @@ import kotlinx.coroutines.flow.flow
 import org.jetbrains.compose.resources.getString
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.saad_al_ghamdy
+import kotlin.math.max
 
-class AndroidPlayerSource(private val context: Context) : PlayerSource {
+class AndroidPlayerSource(context: Context) : PlayerSource {
 
     // handles service communication & session lifecycle
-    private lateinit var controllerFuture: ListenableFuture<MediaController>
-    private var player: MediaController? = null
+    val sessionToken = SessionToken(
+        context, ComponentName(context, PlayerService::class.java)
+    )
+    private val mediaFuture = MediaController.Builder(context, sessionToken).buildAsync()
+    private val player: MediaController by lazy { mediaFuture.get() }
 
-    override val playerState: Channel<PlayerState> = Channel(CONFLATED)
+    override val playerState: Channel<Pair<Int, PlayerState>> = Channel(CONFLATED)
 
-    private var currentItemId: String? = null
-    private var isCurrentItemEnded = false
+    override val playerAction: Channel<PlayerAction> = Channel(CONFLATED)
+
+    private var currentState: PlayerState = PlayerState.Idle
     private var playerError: Exception? = null
+    private var repeatMode = RepeatMode.None
 
     init {
-        initController()
-    }
-
-    private fun initController() {
-        val sessionToken = SessionToken(
-            context,
-            ComponentName(context, PlayerService::class.java)
+        mediaFuture.addListener(
+            { observePlayerUpdates() }, MoreExecutors.directExecutor()
         )
-        controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        controllerFuture.addListener(
-            {
-                player = controllerFuture.get()
-                observePlayerUpdates()
-            },
-            MoreExecutors.directExecutor()
-        )
-    }
-
-    private fun getPlayer(): MediaController {
-        return player ?: controllerFuture.get()
-            .also {
-                player = it
-            }
     }
 
     private fun observePlayerUpdates() {
-        getPlayer().prepare()
-        getPlayer().addListener(object : Player.Listener {
+        player.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 super.onPlaybackStateChanged(playbackState)
-                Log("PlayerSource -> playbackState= $playbackState")
                 playerError ?: run {
                     when (playbackState) {
                         Player.STATE_IDLE -> {
-                            playerState.trySend(PlayerState.Idle)
+                            Log("onPlaybackStateChanged -> playbackState= $playbackState - IDLE")
+                            sendState(PlayerState.Idle)
                         }
 
                         Player.STATE_BUFFERING -> {
-                            playerState.trySend(PlayerState.Loading)
+                            Log("onPlaybackStateChanged -> playbackState= $playbackState - BUFFERING")
+                            sendState(PlayerState.Loading)
                         }
 
-                        Player.STATE_READY -> getPlayer().play()
+                        Player.STATE_READY -> {
+                            Log("onPlaybackStateChanged -> playbackState= $playbackState - READY")
+                            player.play()
+                        }
 
                         Player.STATE_ENDED -> {
-                            isCurrentItemEnded = true
-                            playerState.trySend(PlayerState.Ended)
+                            Log("onPlaybackStateChanged -> playbackState= $playbackState - ENDED")
+                            // repeat last item
+                            if (repeatMode == RepeatMode.One)
+                                player.seekTo(0)
+                            else
+                                sendState(PlayerState.Ended)
                         }
                     }
                 }
@@ -88,67 +81,83 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
-                Log("PlayerSource -> isPlaying= $isPlaying")
-                if (isPlaying) {
-                    isCurrentItemEnded = false
-                    playerState.trySend(
-                        PlayerState.Playing(
-                            duration = getPlayer().duration,
-                            updatedPosition = flow {
-                                getPlayer().apply {
-                                    while (currentPosition <= duration) {
-                                        delay(200)
-                                        emit(currentPosition)
-                                    }
-                                }
-                            }
-                        ))
-                } else if (!isCurrentItemEnded) {
-                    playerState.trySend(PlayerState.Paused)
+                Log("onIsPlayingChanged -> isPlaying= $isPlaying")
+                playerError ?: run {
+                    if (isPlaying) {
+                        sendPlayState()
+                    } else if (currentState !is PlayerState.Ended && currentState !is PlayerState.Loading) {
+                        sendState(PlayerState.Paused)
+                    }
                 }
             }
 
             override fun onPlayerErrorChanged(error: PlaybackException?) {
                 super.onPlayerErrorChanged(error)
-                Log("PlayerSource -> error= $error")
+                Log("onPlayerErrorChanged -> error= $error")
                 playerError = error
 
                 error?.also {
-                    playerState.trySend(PlayerState.Error(error))
+                    sendState(PlayerState.Error(error))
+                }
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+                Log("onMediaItemTransition -> reason = $reason")
+                mediaItem?.toPlayerItem()?.also {
+                    Log("onMediaItemTransition -> newItem id = ${it.id}")
+                    if (reason == MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+                        player.stop()
+                        if (repeatMode == RepeatMode.One) {
+                            player.seekToPreviousMediaItem()
+                        }
+                        player.play()
+                    }
                 }
             }
         })
     }
 
-    suspend fun setItem(id: String, title: String) {
-        currentItemId = id
-        getPlayer().setMediaItem(
-            MediaItem.Builder()
-                .setMediaId(id)
-                .setUri(Url.getDownloadUrlById(id))
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setArtist(getString(Res.string.saad_al_ghamdy))
-                        .setTitle(title)
-                        .build()
-                )
-                .build()
+    private fun sendState(state: PlayerState) {
+        Log("sendState -> state = $state - idx = ${player.currentMediaItemIndex}")
+        currentState = state
+        playerState.trySend(player.currentMediaItemIndex to state)
+    }
+
+    private fun sendPlayState() {
+        sendState(
+            PlayerState.Playing(
+                duration = max(0, player.duration),
+                updatedPosition = flow {
+                    player.apply {
+                        while (currentPosition <= duration) {
+                            delay(200)
+                            emit(currentPosition)
+                        }
+                    }
+                }
+            )
         )
     }
 
-    override suspend fun play(id: String, title: String) {
-        getPlayer().apply {
+    override suspend fun setPlaylist(items: List<PlayerItem>) {
+        val items = items.map {
+            it.toMediaItem(getString(Res.string.saad_al_ghamdy))
+        }
+
+        player.setMediaItems(items)
+        player.stop()
+    }
+
+    override suspend fun play(selectedIndex: Int) {
+        player.apply {
             playerError?.also {
-                // reset the player if there is an error to start over
+                // if there is an error reset the player to start over.
                 prepare()
             }
 
-            if (currentItemId != id || currentMediaItem == null) {
-                // start new media item
-                setItem(id, title)
-            } else if (currentItemId == id && isCurrentItemEnded) {
-                // replay the current media item
-                seekTo(0)
+            if (selectedIndex != currentMediaItemIndex) {
+                seekTo(selectedIndex, 0)
             }
 
             play()
@@ -156,24 +165,51 @@ class AndroidPlayerSource(private val context: Context) : PlayerSource {
     }
 
     override suspend fun pause() {
-        getPlayer().pause()
+        player.pause()
     }
 
-    override suspend fun seekTo(positionMs: Long) {
-        getPlayer().seekTo(positionMs)
-    }
-
-    override suspend fun repeat() {
-        getPlayer().apply {
-            seekTo(0)
-            play()
+    override suspend fun previous() {
+        player.seekToPreviousMediaItem()
+        playerError?.also {
+            player.prepare()
         }
     }
 
+    override suspend fun next() {
+        player.seekToNextMediaItem()
+        playerError?.also {
+            player.prepare()
+        }
+    }
+
+    override suspend fun seekTo(positionMs: Long) {
+        player.seekTo(positionMs)
+    }
+
+    override suspend fun enableRepeat(enable: Boolean) {
+        repeatMode = if (enable) RepeatMode.One else RepeatMode.None
+    }
+
     override suspend fun release() {
-        getPlayer().release()
-        player = null
+        player.release()
         playerError = null
-        currentItemId = null
     }
 }
+
+fun PlayerItem.toMediaItem(reciter: String): MediaItem =
+    MediaItem.Builder()
+        .setMediaId(id)
+        .setUri(Url.getDownloadUrlById(id))
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setArtist(reciter)
+                .setTitle(title)
+                .build()
+        )
+        .build()
+
+fun MediaItem.toPlayerItem(): PlayerItem =
+    PlayerItem(
+        id = mediaId,
+        title = mediaMetadata.title.toString()
+    )

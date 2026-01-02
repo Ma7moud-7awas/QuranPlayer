@@ -1,4 +1,4 @@
-package com.m7.quranplayer.player.ui
+package com.m7.quranplayer.player.data
 
 import android.content.Intent
 import androidx.annotation.OptIn
@@ -20,6 +20,12 @@ class PlayerService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
+        mediaSession = MediaSession.Builder(this, player)
+            .setMediaButtonPreferences(getButtons())
+            .build()
+    }
+
+    private fun getButtons(): ImmutableList<CommandButton> {
         val prevButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
             .setDisplayName(getString(R.string.previous))
             .setPlayerCommand(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
@@ -32,9 +38,7 @@ class PlayerService : MediaSessionService() {
             .setSlots(CommandButton.SLOT_FORWARD)
             .build()
 
-        mediaSession = MediaSession.Builder(this, player)
-            .setMediaButtonPreferences(ImmutableList.of(prevButton, nextButton))
-            .build()
+        return ImmutableList.of(prevButton, nextButton)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {

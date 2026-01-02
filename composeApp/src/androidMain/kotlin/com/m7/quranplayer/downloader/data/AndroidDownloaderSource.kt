@@ -8,6 +8,7 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import com.m7.quranplayer.core.Log
+import com.m7.quranplayer.core.Log.log
 import com.m7.quranplayer.downloader.DownloaderService
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import kotlinx.coroutines.channels.Channel
@@ -53,7 +54,6 @@ class AndroidDownloaderSource(
     }
 
     private fun Download.getDownloadState(id: String): DownloadState {
-        Log("download: id = $id - state = $state")
         return when (this.state) {
             Download.STATE_QUEUED -> DownloadState.Queued
             Download.STATE_DOWNLOADING -> DownloadState.Downloading(
@@ -65,11 +65,12 @@ class AndroidDownloaderSource(
                 }
             )
 
-            Download.STATE_COMPLETED -> DownloadState.Completed
             Download.STATE_STOPPED -> DownloadState.Paused(percentDownloaded / 100)
             Download.STATE_FAILED -> DownloadState.Error(Exception(failureReason.toString()))
+            Download.STATE_COMPLETED -> DownloadState.Completed
             else -> DownloadState.NotDownloaded
         }
+            .log("id= $id - downloadState =")
     }
 
     override suspend fun getDownloadedCount(): Int {

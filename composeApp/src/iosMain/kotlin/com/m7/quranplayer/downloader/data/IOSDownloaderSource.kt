@@ -1,6 +1,5 @@
 package com.m7.quranplayer.downloader.data
 
-import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.Log.log
 import com.m7.quranplayer.downloader.data.model.Download
 import com.m7.quranplayer.downloader.domain.model.DownloadState
@@ -43,42 +42,7 @@ class IOSDownloaderSource(
                     if (it != DownloadState.NotDownloaded)
                         downloads[id] = Download(id = id, state = it)
                 }
-    }
-
-    private fun NSURLSessionDownloadTask.getDownloadState(id: String): DownloadState {
-        return when (state) {
-            NSURLSessionTaskStateSuspended -> {
-                Log("download: id = $id - state = $state Suspended")
-                DownloadState.Paused(progress.fractionCompleted.toFloat())
-            }
-
-            NSURLSessionTaskStateRunning -> {
-                Log("download: id = $id - state = $state Running")
-                DownloadState.Downloading(
-                    flow {
-                        while (progress.fractionCompleted < 100) {
-                            delay(50)
-                            emit(progress.fractionCompleted.toFloat())
-                        }
-                    }
-                )
-            }
-
-            NSURLSessionTaskStateCanceling -> {
-                Log("download: id = $id - state = $state Canceling")
-                DownloadState.Error(Exception(error?.localizedDescription))
-            }
-
-            NSURLSessionTaskStateCompleted -> {
-                Log("download: id = $id - state = $state Completed")
-                DownloadState.Completed
-            }
-
-            else -> {
-                Log("download: id = $id - state = $state else")
-                DownloadState.NotDownloaded
-            }
-        }
+                .log("id= $id - downloadState =")
     }
 
     override suspend fun getDownloadedCount(): Int {
@@ -164,6 +128,25 @@ class IOSDownloaderSource(
                 delay(1000)
             }
         }
+    }
+
+    private fun NSURLSessionDownloadTask.getDownloadState(id: String): DownloadState {
+        return when (state) {
+            NSURLSessionTaskStateRunning -> DownloadState.Downloading(
+                flow {
+                    while (progress.fractionCompleted < 100) {
+                        delay(50)
+                        emit(progress.fractionCompleted.toFloat())
+                    }
+                }
+            )
+
+            NSURLSessionTaskStateSuspended -> DownloadState.Paused(progress.fractionCompleted.toFloat())
+            NSURLSessionTaskStateCanceling -> DownloadState.Error(Exception(error?.localizedDescription))
+            NSURLSessionTaskStateCompleted -> DownloadState.Completed
+            else -> DownloadState.NotDownloaded
+        }
+            .log("id= $id - downloadState =")
     }
 
     private fun updateDownloadState(id: String, state: DownloadState) {

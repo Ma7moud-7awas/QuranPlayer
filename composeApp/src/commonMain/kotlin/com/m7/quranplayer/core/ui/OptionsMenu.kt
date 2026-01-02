@@ -22,7 +22,6 @@ fun OptionsStack(
             modifier = modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start
         ) {
-//            if (expanded)
             rows()
         }
     }

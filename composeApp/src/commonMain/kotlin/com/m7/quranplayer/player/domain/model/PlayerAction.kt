@@ -9,15 +9,12 @@ sealed interface PlayerAction {
 
     data object Pause : PlayerAction
 
-    data object Next : PlayerAction {
-        data class WithId(val id: String) : PlayerAction
-    }
+    data object Next : PlayerAction
 
-    data object Previous : PlayerAction {
-        data class WithId(val id: String) : PlayerAction
-    }
+    data object Previous : PlayerAction
 
-    data object Repeat : PlayerAction
+    @Immutable
+    data class Repeat(val enable: Boolean) : PlayerAction
 
     @Immutable
     data class SeekTo(val positionMs: Long) : PlayerAction

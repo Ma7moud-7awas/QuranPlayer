@@ -1,16 +1,17 @@
 package com.m7.quranplayer.player.data
 
 import com.m7.quranplayer.core.Log
-import com.m7.quranplayer.downloader.data.DownloadManager
+import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
-import platform.AVFoundation.AVPlayer
+import kotlinx.coroutines.launch
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
@@ -22,14 +23,10 @@ import platform.AVFoundation.observationEnabled
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
 import platform.AVFoundation.rate
-import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.AVFoundation.seekToTime
-import platform.CoreMedia.CMTime
-import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
+import platform.Foundation.NSKeyValueChangeNewKey
 import platform.Foundation.NSKeyValueObservingOptionNew
-import platform.Foundation.NSKeyValueObservingOptionOld
-import platform.Foundation.NSURL.Companion.URLWithString
 import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
 import platform.darwin.NSObject
@@ -38,19 +35,32 @@ import platform.foundation.NSKeyValueObservingProtocol
 @OptIn(ExperimentalForeignApi::class)
 class IOSPlayerSource() : PlayerSource {
 
-    private var player: AVQueuePlayer
+    private var player: AVQueuePlayer? = null
 
-    override val playerState: Channel<PlayerState> = Channel(CONFLATED)
+    private val scope = CoroutineScope(Dispatchers.Default)
 
-    private var currentItemId: String? = null
-    private var playerItemObserver = NSObject()
-    private var playerObserver = NSObject()
+    override val playerState: Channel<Pair<Int, PlayerState>> = Channel(CONFLATED)
+
+    override val playerAction: Channel<PlayerAction> = Channel(CONFLATED)
+
+    private var playerItems: List<PlayerItem> = listOf()
+    private var currentItemIndex = -1
+    private var repeatMode = RepeatMode.None
+    private var callingNext = false
+
+    private var playerRateObserver = NSObject()
+    private var itemStatusObserver = NSObject()
+    private var currentItemObserver = NSObject()
 
     init {
-        AVPlayer.observationEnabled = true
-        player = AVQueuePlayer()
+        AVQueuePlayer.observationEnabled = true
+        initObservers()
 
-        playerObserver = object : NSObject(), NSKeyValueObservingProtocol {
+        MediaCenterManager.handleCenterCommands { playerAction.trySend(it) }
+    }
+
+    private fun initObservers() {
+        playerRateObserver = object : NSObject(), NSKeyValueObservingProtocol {
             override fun observeValueForKeyPath(
                 keyPath: String?,
                 ofObject: Any?,
@@ -58,19 +68,21 @@ class IOSPlayerSource() : PlayerSource {
                 context: COpaquePointer?
             ) {
                 if (keyPath == "rate") {
-                    Log("PlayerSource -> player: rate= ${player.rate}")
-                    when {
-                        player.rate > 0 -> checkItemStatus()
+                    player?.also {
+                        Log("RateObserver -> rate= ${it.rate}")
+                        when {
+                            it.rate > 0 -> checkItemStatus()
 
-                        else -> {
-                            if (player.currentItem?.status == AVPlayerItemStatusFailed) {
-                                sendErrorState()
+                            else -> {
+                                if (it.currentItem?.status == AVPlayerItemStatusFailed) {
+                                    sendErrorState()
 
-                            } else if (isItemTimeCompleted()) {
-                                playerState.trySend(PlayerState.Ended)
+                                } else if (player?.currentItem?.isItemTimeCompleted() ?: true) {
+                                    sendState(PlayerState.Ended)
 
-                            } else {
-                                playerState.trySend(PlayerState.Paused)
+                                } else {
+                                    sendState(PlayerState.Paused)
+                                }
                             }
                         }
                     }
@@ -78,54 +90,129 @@ class IOSPlayerSource() : PlayerSource {
             }
         }
 
-        playerItemObserver = object : NSObject(), NSKeyValueObservingProtocol {
+        itemStatusObserver = object : NSObject(), NSKeyValueObservingProtocol {
             override fun observeValueForKeyPath(
                 keyPath: String?,
                 ofObject: Any?,
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
+                Log("StatusObserver -> status= $change")
                 if (keyPath == "status") {
                     checkItemStatus()
                 }
             }
         }
 
-        player.addObserver(
-            playerObserver,
-            "rate",
-            NSKeyValueObservingOptionNew + NSKeyValueObservingOptionOld,
-            null
-        )
-    }
+        currentItemObserver = object : NSObject(), NSKeyValueObservingProtocol {
+            override fun observeValueForKeyPath(
+                keyPath: String?,
+                ofObject: Any?,
+                change: Map<Any?, *>?,
+                context: COpaquePointer?
+            ) {
+                Log("currentItemObserver -> currentItem= $change")
+                if (keyPath == "currentItem") {
+                    (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
+                        .let { newItem ->
+                            player?.pause()
 
-    private fun checkItemStatus() {
-        when (player.currentItem?.status) {
-            AVPlayerItemStatusReadyToPlay -> {
-                Log("PlayerSource -> item status= ${player.currentItem?.status} - ReadyToPlay")
-                sendPlayState()
-            }
+                            newItem?.toPlayerItem()?.let {
+                                // updating index
+                                currentItemIndex = playerItems.indexOf(it)
+                                // add observer to the new item
+                                addItemStatusObserver(newItem)
 
-            AVPlayerItemStatusFailed -> {
-                Log("PlayerSource -> item status= ${player.currentItem?.status} - Failed")
-                sendErrorState()
-            }
-
-            else -> { // handle unknown/buffering states
-                Log("PlayerSource -> item status= ${player.currentItem?.status} - Unknown")
-                playerState.trySend(PlayerState.Loading)
+                                if (!callingNext && repeatMode == RepeatMode.One) {
+                                    // reselect & play the previous item
+                                    scope.launch { previous() }
+                                } else {
+                                    callingNext = false
+                                    // play the new item
+                                    player?.play()
+                                }
+                            }
+                        }
+                }
             }
         }
     }
 
+    private fun addObservers() {
+        player?.let {
+            it.addObserver(
+                playerRateObserver,
+                "rate",
+                NSKeyValueObservingOptionNew,
+                null
+            )
+
+            it.addObserver(
+                currentItemObserver,
+                "currentItem",
+                NSKeyValueObservingOptionNew,
+                null
+            )
+
+            addItemStatusObserver(it.currentItem)
+        }
+    }
+
+    private fun addItemStatusObserver(item: AVPlayerItem?) {
+        Log("addItemStatusObserver ->")
+        item?.addObserver(
+            itemStatusObserver,
+            "status",
+            NSKeyValueObservingOptionNew,
+            null
+        )
+    }
+
+    private fun removeObservers() {
+        player?.also {
+            it.removeObserver(playerRateObserver, "rate")
+            it.removeObserver(currentItemObserver, "currentItem")
+            it.currentItem?.removeObserver(itemStatusObserver, "status")
+        }
+    }
+
+    private fun checkItemStatus() {
+        when (player?.currentItem?.status) {
+            AVPlayerItemStatusReadyToPlay -> {
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - ReadyToPlay")
+                if (currentItemIndex != -1)
+                    sendPlayState()
+            }
+
+            AVPlayerItemStatusFailed -> {
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Failed")
+                player?.removeAllItems()
+                sendErrorState()
+            }
+
+            else -> { // handle unknown/buffering states
+                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Unknown")
+                sendState(PlayerState.Loading)
+            }
+        }
+    }
+
+    private fun sendState(state: PlayerState) {
+        Log("sendState -> state = $state - idx = $currentItemIndex")
+        playerState.trySend(currentItemIndex to state)
+        MediaCenterManager.bindCenterInfo(state, playerItems[currentItemIndex].title)
+    }
+
     private fun sendPlayState() {
-        playerState.trySend(
+        sendState(
             PlayerState.Playing(
-                duration = player.currentItem?.duration()?.toMilliseconds() ?: 0,
+                duration = player?.currentItem?.duration()?.toMilliseconds() ?: 0,
                 updatedPosition = flow {
-                    while (!isItemTimeCompleted()) {
-                        delay(200)
-                        emit(player.currentTime().toMilliseconds())
+                    player?.also {
+                        while (!(player?.currentItem?.isItemTimeCompleted() ?: true)) {
+                            delay(200)
+                            emit(it.currentTime().toMilliseconds())
+                        }
                     }
                 }
             )
@@ -133,84 +220,71 @@ class IOSPlayerSource() : PlayerSource {
     }
 
     private fun sendErrorState() {
-        playerState.trySend(
+        sendState(
             PlayerState.Error(
                 Exception(
-                    player.currentItem?.error?.localizedDescription
-                        ?: player.error?.localizedDescription
+                    player?.currentItem?.error?.localizedDescription
+                        ?: player?.error?.localizedDescription
                         ?: "Player Failed"
                 )
             )
         )
     }
 
-    private fun isItemTimeCompleted() =
-        player.currentItem?.duration()?.toMilliseconds() == player.currentTime().toMilliseconds()
-
-    private fun CValue<CMTime>.toMilliseconds(): Long {
-        return (this.toSeconds() * 1000).toLong()
+    override suspend fun setPlaylist(items: List<PlayerItem>) {
+        playerItems = items
     }
 
-    private fun CValue<CMTime>.toSeconds(): Double =
-        CMTimeGetSeconds(this)
+    private fun resetPlayer(items: List<PlayerItem>) {
+        removeObservers()
+        player?.removeAllItems()
 
-    fun setItem(id: String) {
-        player.currentItem?.removeObserver(playerItemObserver, "status")
-
-        URLWithString(DownloadManager.getDownloadUrl(id))?.also {
-            currentItemId = id
-            player.replaceCurrentItemWithPlayerItem(AVPlayerItem(it))
-
-            player.currentItem?.addObserver(
-                playerItemObserver,
-                "status",
-                NSKeyValueObservingOptionNew + NSKeyValueObservingOptionOld,
-                null
-            )
-        }
+        player = AVQueuePlayer(items.map { it.toAVPlayerItem() })
+        addObservers()
     }
 
-    override suspend fun play(id: String, title: String) {
-        if (currentItemId != id
-            || player.currentItem == null
-            || player.currentItem?.status == AVPlayerItemStatusFailed
-        ) {
-            // start new media item
-            setItem(id)
-        } else if (currentItemId == id && isItemTimeCompleted()) {
-            // replay the current media item
-            seekTo(0)
-        }
+    override suspend fun play(selectedIndex: Int) {
+        if (selectedIndex != currentItemIndex)
+            getQueueByStartIndex(selectedIndex).let {
+                currentItemIndex = selectedIndex
+                resetPlayer(it)
+            }
 
-        player.play()
+        player?.play()
+    }
+
+    private fun getQueueByStartIndex(idx: Int): List<PlayerItem> {
+        return playerItems.subList(idx, playerItems.size)
     }
 
     override suspend fun pause() {
-        player.pause()
+        player?.pause()
+    }
+
+    override suspend fun previous() {
+        if (currentItemIndex > 0)
+            play(currentItemIndex - 1)
+    }
+
+    override suspend fun next() {
+        callingNext = true
+        player?.advanceToNextItem()
     }
 
     override suspend fun seekTo(positionMs: Long) {
-        player.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
-        player.play()
+        player?.also {
+            it.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
+            it.play()
+        }
     }
 
-    override suspend fun repeat() {
-        seekTo(0)
-        player.play()
+    override suspend fun enableRepeat(enable: Boolean) {
+        repeatMode = if (enable) RepeatMode.One else RepeatMode.None
     }
 
     override suspend fun release() {
-        player.currentItem?.removeObserver(
-            playerItemObserver,
-            "status",
-            null
-        )
-        player.removeObserver(
-            playerObserver,
-            "rate",
-            null
-        )
-        player.finalize()
-        currentItemId = null
+        removeObservers()
+        player?.finalize()
+        player = null
     }
 }

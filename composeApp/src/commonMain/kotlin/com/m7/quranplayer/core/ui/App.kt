@@ -1,12 +1,15 @@
 package com.m7.quranplayer.core.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -26,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -34,12 +38,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.ui.ChapterListScreen
 import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
-import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -48,17 +50,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 import quranplayer.composeapp.generated.resources.check_device_connection
-import quranplayer.composeapp.generated.resources.saad_al_ghamdy
 
 @Composable
 fun App(
-    onLanguageChanged: (String) -> Unit,
-    playerCenterAction: () -> PlayerAction?,
-    onStateChanged: (PlayerState, Chapter?) -> Unit
+    onLanguageChanged: (String) -> Unit
 ) {
     QuranPlayerTheme {
-        val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
         var selectedIndex by remember { mutableIntStateOf(-1) }
         val isPlayingItemInvisible by remember {
             derivedStateOf {
@@ -70,7 +69,7 @@ fun App(
 
         Scaffold(
             floatingActionButton = {
-                // scroll to the playing item
+                // error/scroll indicator
                 if (error != null) {
                     ErrorButton()
                 } else if (isPlayingItemInvisible) {
@@ -90,20 +89,28 @@ fun App(
                 contentDescription = null
             )
 
-            // list
+            // content
             ChapterListScreen(
                 listState,
+                innerPadding = innerPadding,
                 changeLanguage = onLanguageChanged,
-                playerCenterAction = playerCenterAction,
-                onStateChanged = { playerState, chapter ->
-                    onStateChanged(playerState, chapter)
-                    error = if (playerState is PlayerState.Error)
-                        playerState.error?.message else null
+                onStateChanged = {
+                    error = if (it is PlayerState.Error)
+                        it.error?.message else null
                 },
-                onSelectedItemChanged = {
-                    selectedIndex = it
-                },
-                modifier = Modifier.padding(innerPadding)
+                onSelectedItemChanged = { selectedIndex = it },
+            )
+
+            // status bar background
+            Spacer(
+                Modifier.fillMaxWidth()
+                    .height(40.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            .4f to Color.White,
+                            1f to Color.Transparent,
+                        )
+                    )
             )
         }
     }

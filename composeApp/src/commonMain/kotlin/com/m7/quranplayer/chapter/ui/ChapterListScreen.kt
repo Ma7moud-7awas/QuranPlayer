@@ -69,9 +69,9 @@ private fun ChapterListScreenPreview() {
 @Composable
 fun ChapterListScreen(
     listState: LazyListState,
+    innerPadding: PaddingValues,
     changeLanguage: (String) -> Unit,
-    playerCenterAction: () -> PlayerAction?,
-    onStateChanged: (PlayerState, Chapter?) -> Unit,
+    onStateChanged: (PlayerState) -> Unit,
     onSelectedItemChanged: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -80,23 +80,20 @@ fun ChapterListScreen(
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(playerState) {
-        onStateChanged(playerState, chapters.getOrNull(chapterViewModel.selectedChapterIndx))
-    }
+    LaunchedEffect(playerState) { onStateChanged(playerState.second) }
 
     LaunchedEffect(chapterViewModel.selectedChapterIndx) {
         onSelectedItemChanged(chapterViewModel.selectedChapterIndx)
-    }
-
-    LaunchedEffect(playerCenterAction()) {
-        playerCenterAction()?.let { chapterViewModel.playerAction(it) }
     }
 
     val (searchExpanded, setSearchExpanded) = remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp),
+        contentPadding = PaddingValues(
+            top = innerPadding.calculateTopPadding(),
+            bottom = 120.dp
+        ),
         state = listState
     ) {
         item(key = Res.string.chapters.key) {
@@ -118,11 +115,10 @@ fun ChapterListScreen(
             ChapterItem(
                 chapter = { chapter },
                 isSelected = { chapterViewModel.selectedChapterIndx == i },
-                playerState = { playerState },
+                playerState = { playerState.second },
                 playerAction = chapterViewModel::playerAction,
                 downloaderAction = chapterViewModel::downloaderAction,
-                isRepeatEnabled = { chapterViewModel.isRepeatEnabled },
-                onRepeatClicked = chapterViewModel::onRepeatClicked,
+                isRepeatEnabled = { chapterViewModel.repeatEnabled },
                 onCardClicked = { chapterViewModel.setSelectedIndex(i) }
             )
         }
@@ -142,7 +138,6 @@ private fun ChapterItemPreview() {
             playerAction = {},
             downloaderAction = { _, _ -> },
             isRepeatEnabled = { false },
-            onRepeatClicked = {},
             onCardClicked = {}
         )
     }
@@ -156,7 +151,6 @@ fun ChapterItem(
     playerAction: (PlayerAction) -> Unit,
     downloaderAction: (String, DownloaderAction) -> Unit,
     isRepeatEnabled: () -> Boolean,
-    onRepeatClicked: (Boolean) -> Unit,
     onCardClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -173,8 +167,7 @@ fun ChapterItem(
             isPlaying = isPlaying,
             playerState = playerState,
             playerAction = playerAction,
-            isRepeatEnabled = isRepeatEnabled,
-            onRepeatClicked = onRepeatClicked
+            repeatEnabled = isRepeatEnabled,
         )
 
         ChapterCard(
