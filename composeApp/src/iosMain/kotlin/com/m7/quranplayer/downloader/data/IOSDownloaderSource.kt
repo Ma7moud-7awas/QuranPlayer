@@ -166,6 +166,8 @@ class IOSDownloaderSource(
                     data?.also { DownloadManager.saveDownloadData(id, data, progress) }
 
                     updateDownloadState(id, DownloadState.Paused((progress)))
+
+                    runQueuedTasks()
                 }
             }
         }
@@ -182,5 +184,7 @@ class IOSDownloaderSource(
         }
         // update state
         downloadState.trySend(id to DownloadState.NotDownloaded)
+
+        runQueuedTasks()
     }
 }
