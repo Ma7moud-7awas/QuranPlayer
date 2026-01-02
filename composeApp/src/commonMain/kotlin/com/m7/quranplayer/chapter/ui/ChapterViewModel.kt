@@ -52,12 +52,13 @@ class ChapterViewModel(
     init {
         buildChapters()
 
+        // route media center actions
         viewModelScope.launch(Dispatchers.Default) {
             playerRepo.playerAction.collectLatest { playerAction(it) }
         }
 
+        // observe & update download state
         viewModelScope.launch(Dispatchers.Default) {
-            // update download state
             downloaderRepo.downloadState.collect { (downloadId, state) ->
                 Log("downloadId= $downloadId - state= $state")
                 if (state == DownloadState.NotDownloaded
@@ -122,40 +123,6 @@ class ChapterViewModel(
         chapters.update { newChapters }
         playerRepo.setPlaylist(newChapters)
         setSelectedIndex(-1)
-    }
-
-    var downloadedChaptersCount by mutableIntStateOf(0)
-        private set
-
-    var downloadedAllEnabled by mutableStateOf(downloadedChaptersCount < 114)
-        private set
-
-    private suspend fun updateDownloadedCount() {
-        downloadedChaptersCount = downloaderRepo.getDownloadedCount()
-    }
-
-    fun downloadAll(start: Boolean) {
-        viewModelScope.launch(Dispatchers.Default) {
-            if (start) {
-                downloadedAllEnabled = false
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
-                    if (downloadState == DownloadState.NotDownloaded
-                        || downloadState is DownloadState.Paused
-                    ) {
-                        downloaderRepo.start(id)
-                    }
-                }
-            } else {
-                downloadedAllEnabled = true
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
-                    if (downloadState is DownloadState.Downloading
-                        || downloadState == DownloadState.Queued
-                    ) {
-                        downloaderRepo.pause(id)
-                    }
-                }
-            }
-        }
     }
 
     var selectedChapterIndx by mutableIntStateOf(-1)
@@ -232,6 +199,40 @@ class ChapterViewModel(
             if (selectedChapterIndx < chapters.value.lastIndex) {
                 selectedChapterIndx++
                 playerRepo.next()
+            }
+        }
+    }
+
+    var downloadedChaptersCount by mutableIntStateOf(0)
+        private set
+
+    var downloadedAllEnabled by mutableStateOf(downloadedChaptersCount < 114)
+        private set
+
+    private suspend fun updateDownloadedCount() {
+        downloadedChaptersCount = downloaderRepo.getDownloadedCount()
+    }
+
+    fun downloadAll(start: Boolean) {
+        viewModelScope.launch(Dispatchers.Default) {
+            if (start) {
+                downloadedAllEnabled = false
+                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                    if (downloadState == DownloadState.NotDownloaded
+                        || downloadState is DownloadState.Paused
+                    ) {
+                        downloaderRepo.start(id)
+                    }
+                }
+            } else {
+                downloadedAllEnabled = true
+                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                    if (downloadState is DownloadState.Downloading
+                        || downloadState == DownloadState.Queued
+                    ) {
+                        downloaderRepo.pause(id)
+                    }
+                }
             }
         }
     }
