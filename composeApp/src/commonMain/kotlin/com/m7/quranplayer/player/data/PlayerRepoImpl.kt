@@ -11,8 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
 
 class PlayerRepoImpl(
-    private val playerSource: PlayerSource,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Main,
+    private val playerSource: PlayerSource
 ) : PlayerRepo {
 
     override val playerState: Flow<Pair<Int, PlayerState>> =
@@ -22,50 +21,34 @@ class PlayerRepoImpl(
         playerSource.playerAction.receiveAsFlow()
 
     override suspend fun setPlaylist(items: List<Chapter>) {
-        withContext(dispatcher) {
-            playerSource.setPlaylist(items.toPlayerItems())
-        }
+        playerSource.setPlaylist(items.toPlayerItems())
     }
 
     override suspend fun play(selectedIndex: Int) {
-        withContext(dispatcher) {
-            playerSource.play(selectedIndex)
-        }
+        playerSource.play(selectedIndex)
     }
 
     override suspend fun previous() {
-        withContext(dispatcher) {
-            playerSource.previous()
-        }
+        playerSource.previous()
     }
 
     override suspend fun next() {
-        withContext(dispatcher) {
-            playerSource.next()
-        }
+        playerSource.next()
     }
 
     override suspend fun pause() {
-        withContext(dispatcher) {
-            playerSource.pause()
-        }
+        playerSource.pause()
     }
 
     override suspend fun seekTo(positionMs: Long) {
-        withContext(dispatcher) {
-            playerSource.seekTo(positionMs)
-        }
+        playerSource.seekTo(positionMs)
     }
 
     override suspend fun enableRepeat(enable: Boolean) {
-        withContext(dispatcher) {
-            playerSource.enableRepeat(enable)
-        }
+        playerSource.enableRepeat(enable)
     }
 
     override suspend fun release() {
-        withContext(dispatcher) {
-            playerSource.release()
-        }
+        playerSource.release()
     }
 }

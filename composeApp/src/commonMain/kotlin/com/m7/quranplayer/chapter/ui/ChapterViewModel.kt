@@ -161,7 +161,7 @@ class ChapterViewModel(
         private set
 
     fun playerAction(action: PlayerAction) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             when (action) {
                 PlayerAction.Pause -> playerRepo.pause()
                 is PlayerAction.Play -> play()
@@ -177,29 +177,23 @@ class ChapterViewModel(
         }
     }
 
-    private fun play() {
-        viewModelScope.launch {
-            if (selectedChapterIndx > -1) {
-                playerRepo.play(selectedChapterIndx)
-            }
+    private suspend fun play() {
+        if (selectedChapterIndx > -1) {
+            playerRepo.play(selectedChapterIndx)
         }
     }
 
-    private fun previous() {
-        viewModelScope.launch {
-            if (selectedChapterIndx > 0) {
-                selectedChapterIndx--
-                playerRepo.previous()
-            }
+    private suspend fun previous() {
+        if (selectedChapterIndx > 0) {
+            selectedChapterIndx--
+            playerRepo.previous()
         }
     }
 
-    private fun next() {
-        viewModelScope.launch {
-            if (selectedChapterIndx < chapters.value.lastIndex) {
-                selectedChapterIndx++
-                playerRepo.next()
-            }
+    private suspend fun next() {
+        if (selectedChapterIndx < chapters.value.lastIndex) {
+            selectedChapterIndx++
+            playerRepo.next()
         }
     }
 
@@ -238,7 +232,7 @@ class ChapterViewModel(
     }
 
     fun downloaderAction(id: String, action: DownloaderAction) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             when (action) {
                 is DownloaderAction.Start -> downloaderRepo.start(id)
                 is DownloaderAction.Pause -> downloaderRepo.pause(id)

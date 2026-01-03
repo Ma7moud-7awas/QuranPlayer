@@ -14,16 +14,22 @@ import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.core.data.Url
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.saad_al_ghamdy
 import kotlin.math.max
 
-class AndroidPlayerSource(context: Context) : PlayerSource {
+class AndroidPlayerSource(
+    context: Context,
+    private val playerScope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate)
+) : PlayerSource {
 
     // handles service communication & session lifecycle
     val sessionToken = SessionToken(
@@ -44,6 +50,10 @@ class AndroidPlayerSource(context: Context) : PlayerSource {
         mediaFuture.addListener(
             { observePlayerUpdates() }, MoreExecutors.directExecutor()
         )
+    }
+
+    private fun Player.launch(scope: CoroutineScope = playerScope, block: Player.() -> Unit) {
+        scope.launch { block() }
     }
 
     private fun observePlayerUpdates() {
@@ -145,14 +155,16 @@ class AndroidPlayerSource(context: Context) : PlayerSource {
             it.toMediaItem(getString(Res.string.saad_al_ghamdy))
         }
 
-        player.setMediaItems(items)
-        player.stop()
+        player.launch {
+            setMediaItems(items)
+            stop()
+        }
     }
 
     override suspend fun play(selectedIndex: Int) {
-        player.apply {
-            playerError?.also {
-                // if there is an error reset the player to start over.
+        player.launch {
+            playerError?.also {// if there is an error,
+                // reset the player to start over.
                 prepare()
             }
 
@@ -165,25 +177,25 @@ class AndroidPlayerSource(context: Context) : PlayerSource {
     }
 
     override suspend fun pause() {
-        player.pause()
+        player.launch { pause() }
     }
 
     override suspend fun previous() {
-        player.seekToPreviousMediaItem()
-        playerError?.also {
-            player.prepare()
+        player.launch {
+            seekToPreviousMediaItem()
+            playerError?.also { prepare() }
         }
     }
 
     override suspend fun next() {
-        player.seekToNextMediaItem()
-        playerError?.also {
-            player.prepare()
+        player.launch {
+            seekToNextMediaItem()
+            playerError?.also { prepare() }
         }
     }
 
     override suspend fun seekTo(positionMs: Long) {
-        player.seekTo(positionMs)
+        player.launch { seekTo(positionMs) }
     }
 
     override suspend fun enableRepeat(enable: Boolean) {
@@ -191,7 +203,7 @@ class AndroidPlayerSource(context: Context) : PlayerSource {
     }
 
     override suspend fun release() {
-        player.release()
+        player.launch { release() }
         playerError = null
     }
 }

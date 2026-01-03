@@ -33,11 +33,11 @@ import platform.darwin.NSObject
 import platform.foundation.NSKeyValueObservingProtocol
 
 @OptIn(ExperimentalForeignApi::class)
-class IOSPlayerSource() : PlayerSource {
+class IOSPlayerSource(
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+) : PlayerSource {
 
     private var player: AVQueuePlayer? = null
-
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     override val playerState: Channel<Pair<Int, PlayerState>> = Channel(CONFLATED)
 
@@ -53,10 +53,12 @@ class IOSPlayerSource() : PlayerSource {
     private var currentItemObserver = NSObject()
 
     init {
-        AVQueuePlayer.observationEnabled = true
-        initObservers()
+        scope.launch {
+            AVQueuePlayer.observationEnabled = true
+            initObservers()
 
-        MediaCenterManager.handleCenterCommands { playerAction.trySend(it) }
+            MediaCenterManager.handleCenterCommands { playerAction.trySend(it) }
+        }
     }
 
     private fun initObservers() {
@@ -67,21 +69,23 @@ class IOSPlayerSource() : PlayerSource {
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
-                if (keyPath == "rate") {
-                    player?.also {
-                        Log("RateObserver -> rate= ${it.rate}")
-                        when {
-                            it.rate > 0 -> checkItemStatus()
+                scope.launch {
+                    if (keyPath == "rate") {
+                        player?.also {
+                            Log("RateObserver -> rate= ${it.rate}")
+                            when {
+                                it.rate > 0 -> checkItemStatus()
 
-                            else -> {
-                                if (it.currentItem?.status == AVPlayerItemStatusFailed) {
-                                    sendErrorState()
+                                else -> {
+                                    if (it.currentItem?.status == AVPlayerItemStatusFailed) {
+                                        sendErrorState()
 
-                                } else if (player?.currentItem?.isItemTimeCompleted() ?: true) {
-                                    sendState(PlayerState.Ended)
+                                    } else if (player?.currentItem?.isItemTimeCompleted() ?: true) {
+                                        sendState(PlayerState.Ended)
 
-                                } else {
-                                    sendState(PlayerState.Paused)
+                                    } else {
+                                        sendState(PlayerState.Paused)
+                                    }
                                 }
                             }
                         }
@@ -97,9 +101,11 @@ class IOSPlayerSource() : PlayerSource {
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
-                Log("StatusObserver -> status= $change")
-                if (keyPath == "status") {
-                    checkItemStatus()
+                scope.launch {
+                    Log("StatusObserver -> status= $change")
+                    if (keyPath == "status") {
+                        checkItemStatus()
+                    }
                 }
             }
         }
@@ -111,50 +117,54 @@ class IOSPlayerSource() : PlayerSource {
                 change: Map<Any?, *>?,
                 context: COpaquePointer?
             ) {
-                Log("currentItemObserver -> currentItem= $change")
-                if (keyPath == "currentItem") {
-                    (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
-                        .let { newItem ->
-                            player?.pause()
+                scope.launch {
+                    Log("currentItemObserver -> currentItem= $change")
+                    if (keyPath == "currentItem") {
+                        (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
+                            .let { newItem ->
+                                player?.pause()
 
-                            newItem?.toPlayerItem()?.let {
-                                // updating index
-                                currentItemIndex = playerItems.indexOf(it)
-                                // add observer to the new item
-                                addItemStatusObserver(newItem)
+                                newItem?.toPlayerItem()?.let {
+                                    // updating index
+                                    currentItemIndex = playerItems.indexOf(it)
+                                    // add observer to the new item
+                                    addItemStatusObserver(newItem)
 
-                                if (!callingNext && repeatMode == RepeatMode.One) {
-                                    // reselect & play the previous item
-                                    scope.launch { previous() }
-                                } else {
-                                    callingNext = false
-                                    // play the new item
-                                    player?.play()
+                                    if (!callingNext && repeatMode == RepeatMode.One) {
+                                        // reselect & play the previous item
+                                        previous()
+                                    } else {
+                                        callingNext = false
+                                        // play the new item
+                                        player?.play()
+                                    }
                                 }
                             }
-                        }
+                    }
                 }
             }
         }
     }
 
     private fun addObservers() {
-        player?.let {
-            it.addObserver(
-                playerRateObserver,
-                "rate",
-                NSKeyValueObservingOptionNew,
-                null
-            )
+        scope.launch {
+            player?.let {
+                it.addObserver(
+                    playerRateObserver,
+                    "rate",
+                    NSKeyValueObservingOptionNew,
+                    null
+                )
 
-            it.addObserver(
-                currentItemObserver,
-                "currentItem",
-                NSKeyValueObservingOptionNew,
-                null
-            )
+                it.addObserver(
+                    currentItemObserver,
+                    "currentItem",
+                    NSKeyValueObservingOptionNew,
+                    null
+                )
 
-            addItemStatusObserver(it.currentItem)
+                addItemStatusObserver(it.currentItem)
+            }
         }
     }
 
@@ -232,7 +242,25 @@ class IOSPlayerSource() : PlayerSource {
     }
 
     override suspend fun setPlaylist(items: List<PlayerItem>) {
-        playerItems = items
+        scope.launch {
+            playerItems = items
+        }
+    }
+
+    override suspend fun play(selectedIndex: Int) {
+        scope.launch {
+            if (selectedIndex != currentItemIndex)
+                getQueueByStartIndex(selectedIndex).let {
+                    currentItemIndex = selectedIndex
+                    resetPlayer(it)
+                }
+
+            player?.play()
+        }
+    }
+
+    private fun getQueueByStartIndex(idx: Int): List<PlayerItem> {
+        return playerItems.subList(idx, playerItems.size)
     }
 
     private fun resetPlayer(items: List<PlayerItem>) {
@@ -243,22 +271,10 @@ class IOSPlayerSource() : PlayerSource {
         addObservers()
     }
 
-    override suspend fun play(selectedIndex: Int) {
-        if (selectedIndex != currentItemIndex)
-            getQueueByStartIndex(selectedIndex).let {
-                currentItemIndex = selectedIndex
-                resetPlayer(it)
-            }
-
-        player?.play()
-    }
-
-    private fun getQueueByStartIndex(idx: Int): List<PlayerItem> {
-        return playerItems.subList(idx, playerItems.size)
-    }
-
     override suspend fun pause() {
-        player?.pause()
+        scope.launch {
+            player?.pause()
+        }
     }
 
     override suspend fun previous() {
@@ -267,24 +283,32 @@ class IOSPlayerSource() : PlayerSource {
     }
 
     override suspend fun next() {
-        callingNext = true
-        player?.advanceToNextItem()
+        scope.launch {
+            callingNext = true
+            player?.advanceToNextItem()
+        }
     }
 
     override suspend fun seekTo(positionMs: Long) {
-        player?.also {
-            it.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
-            it.play()
+        scope.launch {
+            player?.also {
+                it.seekToTime(CMTimeMake(value = positionMs, timescale = 1000))
+                it.play()
+            }
         }
     }
 
     override suspend fun enableRepeat(enable: Boolean) {
-        repeatMode = if (enable) RepeatMode.One else RepeatMode.None
+        scope.launch {
+            repeatMode = if (enable) RepeatMode.One else RepeatMode.None
+        }
     }
 
     override suspend fun release() {
-        removeObservers()
-        player?.finalize()
-        player = null
+        scope.launch {
+            removeObservers()
+            player?.finalize()
+            player = null
+        }
     }
 }
