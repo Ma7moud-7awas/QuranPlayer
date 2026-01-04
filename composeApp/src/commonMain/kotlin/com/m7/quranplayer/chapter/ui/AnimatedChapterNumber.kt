@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.m7.quranplayer.core.ui.MorphPolygonShape
@@ -28,9 +31,26 @@ import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+@Preview
+@Composable
+private fun AnimatedChapterNumber_ar() {
+    AnimatedChapterNumber(
+        isPlaying = { false },
+        chapterNum = { "٢" }
+    )
+}
+
+@Preview
+@Composable
+private fun AnimatedChapterNumber_en() {
+    AnimatedChapterNumber(
+        isPlaying = { true },
+        chapterNum = { "2" }
+    )
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-@Preview
 fun AnimatedChapterNumber(
     isPlaying: () -> Boolean,
     chapterNum: () -> String,
@@ -56,7 +76,7 @@ fun AnimatedChapterNumber(
             .size(56.dp)
             .padding(5.dp)
     ) {
-        // background clipping, applied in a child to rotate the play shape
+        // background clipping
         Spacer(
             Modifier
                 .fillMaxSize()
@@ -65,6 +85,11 @@ fun AnimatedChapterNumber(
                 .background(selectColor)
         )
 
-        Text(text = chapterNum(), color = Color.White)
+        Text(
+            text = chapterNum(),
+            style = if (Locale.current.language == "ar")
+                TextStyle.Default else LocalTextStyle.current,
+            color = Color.White
+        )
     }
 }
