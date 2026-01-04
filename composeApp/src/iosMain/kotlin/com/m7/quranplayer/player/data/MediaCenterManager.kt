@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import platform.MediaPlayer.MPChangePlaybackPositionCommandEvent
+import platform.MediaPlayer.MPChangeRepeatModeCommandEvent
 import platform.MediaPlayer.MPMediaItemPropertyArtist
 import platform.MediaPlayer.MPMediaItemPropertyPlaybackDuration
 import platform.MediaPlayer.MPMediaItemPropertyTitle
@@ -20,6 +21,7 @@ import platform.MediaPlayer.MPNowPlayingPlaybackStateUnknown
 import platform.MediaPlayer.MPRemoteCommandCenter
 import platform.MediaPlayer.MPRemoteCommandHandlerStatusCommandFailed
 import platform.MediaPlayer.MPRemoteCommandHandlerStatusSuccess
+import platform.MediaPlayer.MPRepeatType
 import platform.UIKit.UIApplication
 import platform.UIKit.beginReceivingRemoteControlEvents
 import quranplayer.composeapp.generated.resources.Res
@@ -81,15 +83,25 @@ object MediaCenterManager {
                 playerAction(PlayerAction.Previous)
                 return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
             }
+
+            changeRepeatModeCommand.addTargetWithHandler { event ->
+                (event as? MPChangeRepeatModeCommandEvent)
+                    ?.let {
+                        playerAction(PlayerAction.Repeat(it.repeatType == MPRepeatType.MPRepeatTypeOne))
+                        return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+                    }
+
+                return@addTargetWithHandler MPRemoteCommandHandlerStatusCommandFailed
+            }
             changePlaybackPositionCommand.addTargetWithHandler { event ->
                 (event as? MPChangePlaybackPositionCommandEvent)
                     ?.positionTime?.toLong()
                     ?.let {
                         playerAction(PlayerAction.SeekTo(it * 1000))
+                        return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
                     }
-                    ?: return@addTargetWithHandler MPRemoteCommandHandlerStatusCommandFailed
 
-                return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+                return@addTargetWithHandler MPRemoteCommandHandlerStatusCommandFailed
             }
         }
     }
