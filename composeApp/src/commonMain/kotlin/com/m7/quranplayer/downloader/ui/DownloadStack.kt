@@ -55,8 +55,9 @@ import quranplayer.composeapp.generated.resources.download_chapter_to_play_offli
 @Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_NotDownloaded() {
+    val chapter = chaptersFakeList.first()
     DownloadStack(
-        { chaptersFakeList.first() },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )
@@ -66,10 +67,9 @@ private fun DownloadStack_NotDownloaded() {
 @Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_Queued() {
+    val chapter = chaptersFakeList.first().copy(downloadState = DownloadState.Queued)
     DownloadStack(
-        {
-            chaptersFakeList.first().copy(downloadState = DownloadState.Queued)
-        },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )
@@ -79,11 +79,10 @@ private fun DownloadStack_Queued() {
 @Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_Error() {
+    val chapter = chaptersFakeList.first()
+        .copy(downloadState = DownloadState.Error(Exception()))
     DownloadStack(
-        {
-            chaptersFakeList.first()
-                .copy(downloadState = DownloadState.Error(Exception()))
-        },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )
@@ -93,11 +92,10 @@ private fun DownloadStack_Error() {
 @Preview(showBackground = true, locale = "ar")
 @Preview(showBackground = true)
 private fun DownloadStack_Completed() {
+    val chapter = chaptersFakeList.first()
+        .copy(downloadState = DownloadState.Completed)
     DownloadStack(
-        {
-            chaptersFakeList.first()
-                .copy(downloadState = DownloadState.Completed)
-        },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )
@@ -106,11 +104,10 @@ private fun DownloadStack_Completed() {
 @Composable
 @Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Paused() {
+    val chapter = chaptersFakeList.first()
+        .copy(downloadState = DownloadState.Paused(.2f))
     DownloadStack(
-        {
-            chaptersFakeList.first()
-                .copy(downloadState = DownloadState.Paused(.2f))
-        },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )
@@ -119,11 +116,10 @@ private fun DownloadStack_Paused() {
 @Composable
 @Preview(showBackground = true, locale = "ar")
 private fun DownloadStack_Downloading() {
+    val chapter = chaptersFakeList.first()
+        .copy(downloadState = DownloadState.Downloading(flowOf(.5f)))
     DownloadStack(
-        {
-            chaptersFakeList.first()
-                .copy(downloadState = DownloadState.Downloading(flowOf(.5f)))
-        },
+        { chapter },
         expanded = { true },
         downloaderAction = { _, _ -> }
     )

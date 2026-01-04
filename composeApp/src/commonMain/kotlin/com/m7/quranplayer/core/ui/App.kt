@@ -91,7 +91,7 @@ fun App(
 
             // content
             ChapterListScreen(
-                listState,
+                listState = listState,
                 innerPadding = innerPadding,
                 changeLanguage = onLanguageChanged,
                 onStateChanged = {

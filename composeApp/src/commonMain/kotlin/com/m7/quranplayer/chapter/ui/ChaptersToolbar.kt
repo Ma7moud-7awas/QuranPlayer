@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -148,6 +149,7 @@ fun ChaptersToolbar(
                     value = searchText,
                     onValueChange = { searchText = it },
                     singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge,
                     colors = TextFieldDefaults.colors()
                         .copy(
                             unfocusedContainerColor = Color.Transparent,
@@ -157,6 +159,7 @@ fun ChaptersToolbar(
                         Text(
                             stringResource(Res.string.search_by_name),
                             textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.fillMaxWidth()
                         )
                     },
@@ -175,8 +178,8 @@ fun ChaptersToolbar(
                 Text(
                     stringResource(Res.string.chapters),
                     textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
                     color = GreenGrey,
+                    style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.weight(1f)
                         .clickable { onExpandSearch(true) }
                 )

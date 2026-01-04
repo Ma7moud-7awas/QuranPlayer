@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -34,9 +35,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.core.ui.theme.LightGray
@@ -48,21 +47,37 @@ import com.m7.quranplayer.downloader.ui.DownloadStack
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.ui.PlayerStack
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
+import quranplayer.composeapp.generated.resources.allStringResources
 import quranplayer.composeapp.generated.resources.chapters
 
-val chaptersFakeList = buildList {
-    for (i in 1..10)
-        add(Chapter("$i", "$i", "title $i"))
-}
+val chaptersFakeList: List<Chapter>
+    @Composable
+    get() = buildList {
+        for (i in 1..9)
+            add(
+                Chapter(
+                    "$i",
+                    "$i",
+                    stringResource(Res.allStringResources["_00${i}"] ?: return@buildList)
+                )
+            )
+    }
 
 @Composable
 //@Preview(showBackground = true, locale = "ar")
 private fun ChapterListScreenPreview() {
     QuranPlayerTheme {
-//        ChapterListScreen()
+        ChapterListScreen(
+            rememberLazyListState(),
+            PaddingValues(0.dp),
+            {},
+            {},
+            {}
+        )
     }
 }
 
@@ -126,13 +141,12 @@ fun ChapterListScreen(
 }
 
 @Composable
-@Preview(showBackground = true, locale = "ar")
+@Preview(showBackground = true, locale = "")
 private fun ChapterItemPreview() {
+    val chapter = chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded)
     QuranPlayerTheme {
         ChapterItem(
-            chapter = {
-                chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded)
-            },
+            chapter = { chapter },
             isSelected = { true },
             playerState = { PlayerState.Idle },
             playerAction = {},
@@ -185,6 +199,19 @@ fun ChapterItem(
     }
 }
 
+@Preview(locale = "ar")
+@Composable
+private fun ChapterCard() {
+    QuranPlayerTheme {
+        val chapter = chaptersFakeList[2]
+        ChapterCard(
+            { chapter },
+            { false },
+            { },
+        )
+    }
+}
+
 @Composable
 fun ChapterCard(
     chapter: () -> Chapter,
@@ -217,8 +244,7 @@ fun ChapterCard(
             Text(
                 text = chapter().title,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp).weight(1f)
             )
 
