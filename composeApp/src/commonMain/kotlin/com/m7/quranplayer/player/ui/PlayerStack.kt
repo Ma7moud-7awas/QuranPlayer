@@ -87,7 +87,11 @@ fun PlayerStack(
     repeatEnabled: () -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    OptionsStack(isSelected(), modifier) {
+    OptionsStack(
+        expanded = isSelected(),
+        animateCollapse = false,
+        modifier = modifier
+    ) {
         var totalMillis by remember { mutableLongStateOf(0) }
         val totalDuration = (totalMillis / 1000).toDuration(DurationUnit.SECONDS)
 

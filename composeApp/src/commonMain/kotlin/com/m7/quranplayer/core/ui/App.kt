@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,65 +56,73 @@ import quranplayer.composeapp.generated.resources.check_device_connection
 fun App(
     onLanguageChanged: (String) -> Unit
 ) {
-    QuranPlayerTheme {
-        val coroutineScope = rememberCoroutineScope()
-        val listState = rememberLazyListState()
-        var selectedIndex by remember { mutableIntStateOf(-1) }
-        val isPlayingItemInvisible by remember {
-            derivedStateOf {
-                selectedIndex > -1 && !isItemVisible(selectedIndex, listState)
+    val (appLanguage, setAppLanguage) = remember { mutableStateOf(Locale.current.language) }
+
+    QuranPlayerTheme(
+        { appLanguage },
+        {
+            val coroutineScope = rememberCoroutineScope()
+            val listState = rememberLazyListState()
+            var selectedIndex by remember { mutableIntStateOf(-1) }
+            val isPlayingItemInvisible by remember {
+                derivedStateOf {
+                    selectedIndex > -1 && !isItemVisible(selectedIndex, listState)
+                }
             }
-        }
 
-        var error: String? by remember { mutableStateOf(null) }
+            var error: String? by remember { mutableStateOf(null) }
 
-        Scaffold(
-            floatingActionButton = {
-                // error/scroll indicator
-                if (error != null) {
-                    ErrorButton()
-                } else if (isPlayingItemInvisible) {
-                    ScrollButton {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(selectedIndex + 1)
+            Scaffold(
+                floatingActionButton = {
+                    // error/scroll indicator
+                    if (error != null) {
+                        ErrorButton()
+                    } else if (isPlayingItemInvisible) {
+                        ScrollButton {
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(selectedIndex + 1)
+                            }
                         }
                     }
                 }
-            }
-        ) { innerPadding ->
-            // background
-            Image(
-                painterResource(Res.drawable.bg_light),
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.fillMaxSize(),
-                contentDescription = null
-            )
+            ) { innerPadding ->
+                // background
+                Image(
+                    painterResource(Res.drawable.bg_light),
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null
+                )
 
-            // content
-            ChapterListScreen(
-                listState = listState,
-                innerPadding = innerPadding,
-                changeLanguage = onLanguageChanged,
-                onStateChanged = {
-                    error = if (it is PlayerState.Error)
-                        it.error?.message else null
-                },
-                onSelectedItemChanged = { selectedIndex = it },
-            )
+                // content
+                ChapterListScreen(
+                    listState = listState,
+                    innerPadding = innerPadding,
+                    changeLanguage = {
+                        onLanguageChanged(it)
+                        setAppLanguage(it)
+                    },
+                    onStateChanged = {
+                        error = if (it is PlayerState.Error)
+                            it.error?.message else null
+                    },
+                    onSelectedItemChanged = { selectedIndex = it },
+                )
 
-            // status bar background
-            Spacer(
-                Modifier.fillMaxWidth()
-                    .height(40.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            .4f to Color.White,
-                            1f to Color.Transparent,
+                // status bar background
+                Spacer(
+                    Modifier.fillMaxWidth()
+                        .height(40.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                .4f to Color.White,
+                                1f to Color.Transparent,
+                            )
                         )
-                    )
-            )
+                )
+            }
         }
-    }
+    )
 }
 
 fun isItemVisible(itemIndex: Int, listState: LazyListState): Boolean {

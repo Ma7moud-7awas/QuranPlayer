@@ -83,7 +83,6 @@ object MediaCenterManager {
                 playerAction(PlayerAction.Previous)
                 return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
             }
-
             changeRepeatModeCommand.addTargetWithHandler { event ->
                 (event as? MPChangeRepeatModeCommandEvent)
                     ?.let {

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 fun OptionsStack(
     expanded: Boolean,
     modifier: Modifier = Modifier,
+    animateCollapse: Boolean = true,
     rows: @Composable ColumnScope.() -> Unit
 ) {
     AnimatedVisibility(expanded) {
@@ -22,7 +23,8 @@ fun OptionsStack(
             modifier = modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start
         ) {
-            rows()
+            if (expanded || animateCollapse)
+                rows()
         }
     }
 }

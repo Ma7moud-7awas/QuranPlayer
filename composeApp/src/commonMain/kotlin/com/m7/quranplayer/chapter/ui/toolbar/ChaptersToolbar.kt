@@ -1,10 +1,8 @@
-package com.m7.quranplayer.chapter.ui
+package com.m7.quranplayer.chapter.ui.toolbar
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,63 +12,40 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Stop
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.m7.quranplayer.core.di.localize
-import com.m7.quranplayer.core.ui.OptionsRow
 import com.m7.quranplayer.core.ui.OptionsStack
-import com.m7.quranplayer.core.ui.theme.Green40
 import com.m7.quranplayer.core.ui.theme.GreenGrey
 import com.m7.quranplayer.core.ui.theme.LightGreenGrey
-import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
-import quranplayer.composeapp.generated.resources.app_will_be_restarted
 import quranplayer.composeapp.generated.resources.chapters
-import quranplayer.composeapp.generated.resources.current_language
-import quranplayer.composeapp.generated.resources.download_all
-import quranplayer.composeapp.generated.resources.downloads
-import quranplayer.composeapp.generated.resources.downloads_count
-import quranplayer.composeapp.generated.resources.language
 import quranplayer.composeapp.generated.resources.search_by_name
 
 @Composable
@@ -118,6 +93,7 @@ fun ChaptersToolbar(
     modifier: Modifier = Modifier
 ) {
     val containerShape = RoundedCornerShape(10)
+
     OutlinedCard(
         shape = containerShape,
         modifier = modifier
@@ -222,150 +198,13 @@ fun ChaptersToolbar(
                 modifier = borderModifier
             )
 
-            LanguageRow(changeLanguage, borderModifier)
-        }
-    }
-}
-
-@Composable
-fun DownloadRow(
-    downloadedChaptersCount: () -> Int,
-    downloadedAllEnabled: () -> Boolean,
-    downloadAll: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OptionsRow(modifier = modifier) {
-        Icon(
-            Icons.Rounded.Download, null,
-            modifier = Modifier.padding(12.dp)
-        )
-
-        // label
-        Text(
-            stringResource(Res.string.downloads) + " :",
-            modifier = Modifier.fillMaxWidth(.4f)
-        )
-
-        // value
-        Text(
-            stringResource(
-                Res.string.downloads_count,
-                downloadedChaptersCount().localize()
-            ),
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
-
-        // download all btn & progress
-        if (downloadedChaptersCount() < 114) {
-            if (downloadedAllEnabled()) {
-                TextButton(onClick = { downloadAll(true) }) {
-                    Text(
-                        text = stringResource(Res.string.download_all),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Light,
-                    )
-                }
-            } else {
-                IconButton({ downloadAll(false) }) {
-                    CircularProgressIndicator(
-                        progress = { downloadedChaptersCount() / 114f },
-                        modifier = Modifier.padding(5.dp)
-                    )
-
-                    Icon(
-                        Icons.Rounded.Stop,
-                        "Stop downloading",
-                        tint = Color.Red
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LanguageRow(
-    changeLanguage: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val (menuExpanded, expandMenu) = remember { mutableStateOf(false) }
-    val languages = mapOf(
-        "ar" to "العربية",
-        "en" to "English",
-    )
-
-    OptionsRow(modifier = modifier) {
-        Icon(
-            Icons.Rounded.Language, null,
-            modifier = Modifier.padding(12.dp)
-        )
-
-        // label
-        Text(
-            stringResource(Res.string.language) + " :",
-            modifier = Modifier.fillMaxWidth(.4f)
-        )
-
-        // value
-        Text(
-            stringResource(Res.string.current_language),
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
-
-        // expand btn
-        IconButton(onClick = { expandMenu(!menuExpanded) }) {
-            Icon(
-                Icons.Rounded.KeyboardArrowDown, null,
-                modifier = Modifier.let {
-                    if (menuExpanded) it.rotate(180f) else it
-                }
+            LanguageRow(
+                {
+                    expandMenu(false)
+                    changeLanguage(it)
+                },
+                borderModifier
             )
-        }
-    }
-
-    AnimatedVisibility(menuExpanded) {
-        Column {
-            // hint
-            Text(
-                stringResource(Res.string.app_will_be_restarted),
-                fontSize = 10.sp,
-                textAlign = TextAlign.Center,
-                color = Orange,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // language options
-            languages
-                .forEach { lang ->
-                    key(lang.key) {
-                        val selected by remember {
-                            derivedStateOf { lang.key == Locale.current.language }
-                        }
-
-                        val color = if (selected) LightGreenGrey else Green40
-
-                        Text(
-                            lang.value,
-                            textAlign = TextAlign.Center,
-                            color = color,
-                            modifier = Modifier.fillMaxWidth()
-                                .padding(horizontal = 60.dp)
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
-                                .border(1.dp, color, RoundedCornerShape(30))
-                                .padding(5.dp)
-                                .let {
-                                    if (!selected)
-                                        it.clickable {
-                                            expandMenu(false)
-                                            changeLanguage(lang.key)
-                                        }
-                                    else it
-                                }
-                        )
-                    }
-                }
         }
     }
 }

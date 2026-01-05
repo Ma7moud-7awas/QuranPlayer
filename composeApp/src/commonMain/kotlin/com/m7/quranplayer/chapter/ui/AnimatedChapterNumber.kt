@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,13 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.m7.quranplayer.core.ui.MorphPolygonShape
 import com.m7.quranplayer.core.ui.theme.Green
 import com.m7.quranplayer.core.ui.theme.Orange
+import com.m7.quranplayer.core.ui.theme.digitsTextStyle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Preview
@@ -87,8 +85,7 @@ fun AnimatedChapterNumber(
 
         Text(
             text = chapterNum(),
-            style = if (Locale.current.language == "ar")
-                TextStyle.Default else LocalTextStyle.current,
+            style = digitsTextStyle,
             color = Color.White
         )
     }

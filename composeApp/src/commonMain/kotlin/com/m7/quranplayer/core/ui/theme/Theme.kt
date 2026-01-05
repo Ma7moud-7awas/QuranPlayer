@@ -6,6 +6,8 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.intl.Locale
@@ -22,9 +24,15 @@ private val LightColorScheme = lightColorScheme(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuranPlayerTheme(
+    currentLanguage: () -> String = { Locale.current.language },
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(LocalLayoutDirection provides Locale.current.direction) {
+    val currentLanguage = rememberUpdatedState(currentLanguage())
+
+    CompositionLocalProvider(
+        LocalLanguage provides currentLanguage.value,
+        LocalLayoutDirection provides Locale.current.direction
+    ) {
         MaterialExpressiveTheme(
             colorScheme = LightColorScheme,
             typography = Typography,
@@ -34,8 +42,10 @@ fun QuranPlayerTheme(
     }
 }
 
+val LocalLanguage = compositionLocalOf { Locale.current.language }
+
 val Locale.direction: LayoutDirection
-    get() = when (language) {
-        "ar" -> LayoutDirection.Rtl
+    get() = when {
+        language.contains("ar") -> LayoutDirection.Rtl
         else -> LayoutDirection.Ltr
     }

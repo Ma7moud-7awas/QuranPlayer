@@ -72,7 +72,7 @@ class IOSPlayerSource(
                 scope.launch {
                     if (keyPath == "rate") {
                         player?.also {
-                            Log("RateObserver -> rate= ${it.rate}")
+                            Log("onRateChanged -> rate= ${it.rate}")
                             when {
                                 it.rate > 0 -> checkItemStatus()
 
@@ -80,7 +80,7 @@ class IOSPlayerSource(
                                     if (it.currentItem?.status == AVPlayerItemStatusFailed) {
                                         sendErrorState()
 
-                                    } else if (player?.currentItem?.isItemTimeCompleted() ?: true) {
+                                    } else if (player?.currentItem?.isItemTimeCompleted() == true) {
                                         sendState(PlayerState.Ended)
 
                                     } else {
@@ -102,7 +102,7 @@ class IOSPlayerSource(
                 context: COpaquePointer?
             ) {
                 scope.launch {
-                    Log("StatusObserver -> status= $change")
+                    Log("onStatusChanged -> status= $change")
                     if (keyPath == "status") {
                         checkItemStatus()
                     }
@@ -118,13 +118,13 @@ class IOSPlayerSource(
                 context: COpaquePointer?
             ) {
                 scope.launch {
-                    Log("currentItemObserver -> currentItem= $change")
+                    Log("onCurrentItemChanged -> currentItem= $change")
                     if (keyPath == "currentItem") {
                         (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
-                            .let { newItem ->
+                            ?.let { newItem ->
                                 player?.pause()
 
-                                newItem?.toPlayerItem()?.let {
+                                newItem.toPlayerItem()?.let {
                                     // updating index
                                     currentItemIndex = playerItems.indexOf(it)
                                     // add observer to the new item
@@ -169,7 +169,7 @@ class IOSPlayerSource(
     }
 
     private fun addItemStatusObserver(item: AVPlayerItem?) {
-        Log("addItemStatusObserver ->")
+        Log("addItemStatusObserver")
         item?.addObserver(
             itemStatusObserver,
             "status",
@@ -187,21 +187,21 @@ class IOSPlayerSource(
     }
 
     private fun checkItemStatus() {
-        when (player?.currentItem?.status) {
+        when (val status = player?.currentItem?.status) {
             AVPlayerItemStatusReadyToPlay -> {
-                Log("checkItemStatus -> status= ${player?.currentItem?.status} - ReadyToPlay")
+                Log("checkItemStatus -> status= $status - ReadyToPlay")
                 if (currentItemIndex != -1)
                     sendPlayState()
             }
 
             AVPlayerItemStatusFailed -> {
-                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Failed")
-                player?.removeAllItems()
+                Log("checkItemStatus -> status= $status - Failed")
+                scope.launch { player?.removeAllItems() }
                 sendErrorState()
             }
 
             else -> { // handle unknown/buffering states
-                Log("checkItemStatus -> status= ${player?.currentItem?.status} - Unknown")
+                Log("checkItemStatus -> status= $status - Unknown")
                 sendState(PlayerState.Loading)
             }
         }
@@ -210,7 +210,7 @@ class IOSPlayerSource(
     private fun sendState(state: PlayerState) {
         Log("sendState -> state = $state - idx = $currentItemIndex")
         playerState.trySend(currentItemIndex to state)
-        MediaCenterManager.bindCenterInfo(state, playerItems[currentItemIndex].title)
+        MediaCenterManager.bindCenterInfo(state, playerItems.getOrNull(currentItemIndex)?.title)
     }
 
     private fun sendPlayState() {
@@ -284,8 +284,13 @@ class IOSPlayerSource(
 
     override suspend fun next() {
         scope.launch {
-            callingNext = true
-            player?.advanceToNextItem()
+            if (player?.items()?.isEmpty() ?: true) {
+                if (currentItemIndex < playerItems.lastIndex)
+                    play(currentItemIndex + 1)
+            } else {
+                callingNext = true
+                player?.advanceToNextItem()
+            }
         }
     }
 

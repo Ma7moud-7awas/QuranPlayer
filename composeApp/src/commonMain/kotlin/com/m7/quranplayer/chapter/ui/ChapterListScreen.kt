@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.chapter.ui.toolbar.ChaptersToolbar
+import com.m7.quranplayer.core.di.format
 import com.m7.quranplayer.core.ui.theme.LightGray
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
@@ -57,18 +59,21 @@ import quranplayer.composeapp.generated.resources.chapters
 val chaptersFakeList: List<Chapter>
     @Composable
     get() = buildList {
-        for (i in 1..9)
+        for (i in 1..9) {
+            val fId = i.format("%03d")
             add(
                 Chapter(
+                    fId,
                     "$i",
-                    "$i",
-                    stringResource(Res.allStringResources["_00${i}"] ?: return@buildList)
+                    stringResource(Res.allStringResources[fId] ?: return@buildList)
                 )
             )
+        }
     }
 
-@Composable
+
 //@Preview(showBackground = true, locale = "ar")
+@Composable
 private fun ChapterListScreenPreview() {
     QuranPlayerTheme {
         ChapterListScreen(
@@ -95,7 +100,7 @@ fun ChapterListScreen(
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
     val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(playerState) { onStateChanged(playerState.second) }
+    LaunchedEffect(playerState) { onStateChanged(playerState) }
 
     LaunchedEffect(chapterViewModel.selectedChapterIndx) {
         onSelectedItemChanged(chapterViewModel.selectedChapterIndx)
@@ -119,6 +124,7 @@ fun ChapterListScreen(
                 changeLanguage = {
                     changeLanguage(it)
                     chapterViewModel.onLanguageChanged()
+
                 },
                 downloadedChaptersCount = { chapterViewModel.downloadedChaptersCount },
                 downloadedAllEnabled = { chapterViewModel.downloadedAllEnabled },
@@ -130,7 +136,7 @@ fun ChapterListScreen(
             ChapterItem(
                 chapter = { chapter },
                 isSelected = { chapterViewModel.selectedChapterIndx == i },
-                playerState = { playerState.second },
+                playerState = { playerState },
                 playerAction = chapterViewModel::playerAction,
                 downloaderAction = chapterViewModel::downloaderAction,
                 isRepeatEnabled = { chapterViewModel.repeatEnabled },
@@ -140,8 +146,8 @@ fun ChapterListScreen(
     }
 }
 
-@Composable
 @Preview(showBackground = true, locale = "")
+@Composable
 private fun ChapterItemPreview() {
     val chapter = chaptersFakeList.first().copy(downloadState = DownloadState.NotDownloaded)
     QuranPlayerTheme {

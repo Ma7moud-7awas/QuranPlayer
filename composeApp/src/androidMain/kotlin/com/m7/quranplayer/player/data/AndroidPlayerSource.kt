@@ -40,7 +40,7 @@ class AndroidPlayerSource(
 
     override val playerState: Channel<Pair<Int, PlayerState>> = Channel(CONFLATED)
 
-    override val playerAction: Channel<PlayerAction> = Channel(CONFLATED)
+    override val playerAction: Channel<PlayerAction> = Channel()
 
     private var currentState: PlayerState = PlayerState.Idle
     private var playerError: Exception? = null
@@ -163,9 +163,10 @@ class AndroidPlayerSource(
 
     override suspend fun play(selectedIndex: Int) {
         player.launch {
-            playerError?.also {// if there is an error,
-                // reset the player to start over.
-                prepare()
+            this@AndroidPlayerSource.playerError?.also {
+                // if there is an error,
+                // clear it & start over.
+                this@AndroidPlayerSource.playerError = null
             }
 
             if (selectedIndex != currentMediaItemIndex) {

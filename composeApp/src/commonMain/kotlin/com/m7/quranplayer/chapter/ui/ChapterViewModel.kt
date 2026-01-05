@@ -18,11 +18,8 @@ import com.m7.quranplayer.player.domain.repo.PlayerRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
@@ -38,9 +35,9 @@ class ChapterViewModel(
 ) : ViewModel() {
 
     fun onLanguageChanged() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             delay(50)
-            buildChapters()
+            loadChapters()
         }
     }
 
@@ -50,39 +47,19 @@ class ChapterViewModel(
         field = MutableStateFlow(emptyList())
 
     init {
-        buildChapters()
+        // initial load
+        loadChapters()
+
+        collectPlayerStateUpdates()
 
         // route media center actions
-        viewModelScope.launch(Dispatchers.Default) {
-            playerRepo.playerAction.collectLatest { playerAction(it) }
-        }
+        collectCenterActionUpdates()
 
         // observe & update download state
-        viewModelScope.launch(Dispatchers.Default) {
-            downloaderRepo.downloadState.collect { (downloadId, state) ->
-                Log("downloadId= $downloadId - state= $state")
-                if (state == DownloadState.NotDownloaded
-                    || state is DownloadState.Paused
-                    || state is DownloadState.Error
-                ) {
-                    downloadedAllEnabled = true
-                }
-
-                originalChapters.updateAndGet {
-                    it.map { chapter ->
-                        if (chapter.id == downloadId)
-                            chapter.copy(downloadState = state) else chapter
-                    }
-                }.also { newChapters ->
-                    chapters.update { newChapters }
-                }
-
-                updateDownloadedCount()
-            }
-        }
+        collectDownloaderStateUpdates()
     }
 
-    private fun buildChapters() {
+    private fun loadChapters() {
         viewModelScope.launch(Dispatchers.Default) {
             originalChapters.updateAndGet {
                 chapterRepo.getChapters(
@@ -120,45 +97,60 @@ class ChapterViewModel(
     }
 
     private suspend fun updateChapters(newChapters: List<Chapter>) {
+        setSelectedIndex(-1)
         chapters.update { newChapters }
         playerRepo.setPlaylist(newChapters)
-        setSelectedIndex(-1)
     }
 
     var selectedChapterIndx by mutableIntStateOf(-1)
         private set
 
-    fun setSelectedIndex(indx: Int) {
-        when (indx) {
+    fun setSelectedIndex(index: Int) {
+        when (index) {
             -1 -> {
                 // deselect state. "reset"
-                selectedChapterIndx = indx
+                selectedChapterIndx = index
                 playerAction(PlayerAction.Pause)
             }
 
-            selectedChapterIndx if playerState.value.second is PlayerState.Playing -> {
+            selectedChapterIndx if playerState.value is PlayerState.Playing -> {
                 // pause the same chapter.
                 playerAction(PlayerAction.Pause)
             }
 
             else -> {
                 // play a new chapter.
-                selectedChapterIndx = indx
+                selectedChapterIndx = index
                 playerAction(PlayerAction.Play)
+                resetPlayerState()
             }
         }
     }
 
-    val playerState: StateFlow<Pair<Int?, PlayerState>> = playerRepo.playerState
-        .onEach { (idx, state) -> selectedChapterIndx = idx }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null to PlayerState.Idle
-        )
+    val playerState: StateFlow<PlayerState>
+        field = MutableStateFlow<PlayerState>(PlayerState.Idle)
+
+    private fun resetPlayerState() {
+        playerState.update { PlayerState.Loading }
+    }
+
+    private fun collectPlayerStateUpdates() {
+        viewModelScope.launch(Dispatchers.Default) {
+            playerRepo.playerState.collectLatest { (idx, state) ->
+                selectedChapterIndx = idx
+                playerState.update { state }
+            }
+        }
+    }
 
     var repeatEnabled by mutableStateOf(false)
         private set
+
+    private fun collectCenterActionUpdates() {
+        viewModelScope.launch(Dispatchers.Default) {
+            playerRepo.playerAction.collectLatest { playerAction(it) }
+        }
+    }
 
     fun playerAction(action: PlayerAction) {
         viewModelScope.launch(Dispatchers.Default) {
@@ -185,6 +177,8 @@ class ChapterViewModel(
 
     private suspend fun previous() {
         if (selectedChapterIndx > 0) {
+            resetPlayerState()
+
             selectedChapterIndx--
             playerRepo.previous()
         }
@@ -192,8 +186,42 @@ class ChapterViewModel(
 
     private suspend fun next() {
         if (selectedChapterIndx < chapters.value.lastIndex) {
+            resetPlayerState()
+
             selectedChapterIndx++
             playerRepo.next()
+        }
+    }
+
+    private fun collectDownloaderStateUpdates() {
+        viewModelScope.launch(Dispatchers.Default) {
+            downloaderRepo.downloadState.collect { (downloadId, state) ->
+                Log("downloadId= $downloadId - state= $state")
+
+                if (state == DownloadState.NotDownloaded
+                    || state is DownloadState.Paused
+                    || state is DownloadState.Error
+                ) {
+                    downloadedAllEnabled = true
+                }
+
+                originalChapters.update {
+                    it.map { chapter ->
+                        if (chapter.id == downloadId)
+                            chapter.copy(downloadState = state) else chapter
+                    }
+                }
+
+                chapters.update {
+                    // update only the displayed chapters
+                    it.map { chapter ->
+                        if (chapter.id == downloadId)
+                            chapter.copy(downloadState = state) else chapter
+                    }
+                }
+
+                updateDownloadedCount()
+            }
         }
     }
 
