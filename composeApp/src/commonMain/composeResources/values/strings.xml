@@ -3,6 +3,7 @@
 
     <string name="chapters">Chapters</string>
     <string name="search_by_name">Search by chapter name</string>
+    <string name="filter_by_part">Filter by Part Number</string>
     <string name="language">Language</string>
     <string name="current_language">English</string>
     <string name="app_will_be_restarted">App will be restarted to change language</string>

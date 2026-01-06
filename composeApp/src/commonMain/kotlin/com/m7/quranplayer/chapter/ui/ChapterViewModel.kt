@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.chapter.domain.model.Part
 import com.m7.quranplayer.chapter.domain.repo.ChapterRepo
 import com.m7.quranplayer.core.Log
 import com.m7.quranplayer.downloader.domain.model.DownloadState
@@ -93,6 +94,16 @@ class ChapterViewModel(
                             updateChapters(searchedChapters)
                         }
                 } ?: updateChapters(originalChapters.value)
+        }
+    }
+
+    var selectedPart by mutableStateOf<Part?>(null)
+        private set
+
+    fun onPartSelected(part: Part) {
+        viewModelScope.launch(Dispatchers.Default) {
+            selectedPart = part
+            updateChapters(originalChapters.value.filter { it.parts.contains(part) })
         }
     }
 
@@ -239,7 +250,7 @@ class ChapterViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             if (start) {
                 downloadedAllEnabled = false
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
                     if (downloadState == DownloadState.NotDownloaded
                         || downloadState is DownloadState.Paused
                     ) {
@@ -248,7 +259,7 @@ class ChapterViewModel(
                 }
             } else {
                 downloadedAllEnabled = true
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
                     if (downloadState is DownloadState.Downloading
                         || downloadState == DownloadState.Queued
                     ) {
