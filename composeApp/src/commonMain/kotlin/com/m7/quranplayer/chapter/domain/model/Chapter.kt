@@ -11,10 +11,11 @@ data class Chapter(
     val number: String,
     // localized chapter title
     val title: String,
+    // the parts that this chapter belongs to.
+    val parts: List<Part>,
 
-    val downloadState: DownloadState = DownloadState.NotDownloaded
+    val downloadState: DownloadState = DownloadState.NotDownloaded,
 ) {
-
     companion object Builder {
         suspend fun build(
             id: Int,
@@ -26,6 +27,7 @@ data class Chapter(
                 id = formattedId,
                 number = id.localize(),
                 title = getTitle(formattedId),
+                parts = Part.getPartsByChapterNumber(id),
                 downloadState = getDownloadState(formattedId)
             )
         }

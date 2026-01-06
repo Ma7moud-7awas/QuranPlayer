@@ -1,8 +1,11 @@
 package com.m7.quranplayer.chapter.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,8 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -35,9 +41,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.chapter.domain.model.Chapter
+import com.m7.quranplayer.chapter.domain.model.Part
 import com.m7.quranplayer.chapter.ui.toolbar.ChaptersToolbar
 import com.m7.quranplayer.core.di.format
 import com.m7.quranplayer.core.ui.theme.LightGray
@@ -55,6 +63,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.allStringResources
 import quranplayer.composeapp.generated.resources.chapters
+import quranplayer.composeapp.generated.resources.filter_by_part
 
 val chaptersFakeList: List<Chapter>
     @Composable
@@ -63,9 +72,10 @@ val chaptersFakeList: List<Chapter>
             val fId = i.format("%03d")
             add(
                 Chapter(
-                    fId,
-                    "$i",
-                    stringResource(Res.allStringResources[fId] ?: return@buildList)
+                    id = fId,
+                    number = "$i",
+                    title = stringResource(Res.allStringResources[fId] ?: return@buildList),
+                    parts = Part.getPartsByChapterNumber(i)
                 )
             )
         }
@@ -130,6 +140,31 @@ fun ChapterListScreen(
                 downloadedAllEnabled = { chapterViewModel.downloadedAllEnabled },
                 downloadAll = chapterViewModel::downloadAll,
             )
+
+            // parts
+            AnimatedVisibility(searchExpanded) {
+                Column {
+                    // header
+                    Text(
+                        stringResource(Res.string.filter_by_part) + ":",
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+
+                    LazyRow(contentPadding = PaddingValues(20.dp)) {
+                        items(
+                            items = Part.entries.toList(),
+                            key = { it.name }
+                        ) { part ->
+                            PartItem(
+                                part = { part },
+                                isSelected = { chapterViewModel.selectedPart == part },
+                                modifier = Modifier.clickable { chapterViewModel.onPartSelected(part) }
+                            )
+                        }
+                    }
+                }
+
+            }
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->
@@ -143,6 +178,34 @@ fun ChapterListScreen(
                 onCardClicked = { chapterViewModel.setSelectedIndex(i) }
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PartItem() {
+    Row {
+        PartItem({ Part.Fifth }, { true })
+        PartItem({ Part.TwentyFifth }, { false })
+    }
+}
+
+@Composable
+fun PartItem(part: () -> Part, isSelected: () -> Boolean, modifier: Modifier = Modifier) {
+    val color = if (isSelected()) Orange else MaterialTheme.colorScheme.surfaceVariant
+
+    OutlinedCard(
+        modifier = modifier.padding(horizontal = 5.dp),
+        shape = RoundedCornerShape(50),
+        border = BorderStroke(1.dp, color)
+    ) {
+        Text(
+            text = (part().ordinal + 1).toString(),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .width(35.dp)
+                .padding(vertical = 5.dp)
+        )
     }
 }
 
