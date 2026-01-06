@@ -1,11 +1,9 @@
 package com.m7.quranplayer.chapter.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,7 +59,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.allStringResources
 import quranplayer.composeapp.generated.resources.chapters
-import quranplayer.composeapp.generated.resources.filter_by_part
 
 val chaptersFakeList: List<Chapter>
     @Composable
@@ -141,30 +136,11 @@ fun ChapterListScreen(
                 downloadAll = chapterViewModel::downloadAll,
             )
 
-            // parts
-            AnimatedVisibility(searchExpanded) {
-                Column {
-                    // header
-                    Text(
-                        stringResource(Res.string.filter_by_part) + ":",
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
-
-                    LazyRow(contentPadding = PaddingValues(20.dp)) {
-                        items(
-                            items = Part.entries.toList(),
-                            key = { it.name }
-                        ) { part ->
-                            PartItem(
-                                part = { part },
-                                isSelected = { chapterViewModel.selectedPart == part },
-                                modifier = Modifier.clickable { chapterViewModel.onPartSelected(part) }
-                            )
-                        }
-                    }
-                }
-
-            }
+            Filter(
+                expand = { searchExpanded },
+                selectedPart = { chapterViewModel.selectedPart },
+                onPartSelected = chapterViewModel::onPartSelected
+            )
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->
@@ -175,7 +151,7 @@ fun ChapterListScreen(
                 playerAction = chapterViewModel::playerAction,
                 downloaderAction = chapterViewModel::downloaderAction,
                 isRepeatEnabled = { chapterViewModel.repeatEnabled },
-                onCardClicked = { chapterViewModel.setSelectedIndex(i) }
+                onCardClicked = { chapterViewModel.setSelectedChapterIndex(i) }
             )
         }
     }

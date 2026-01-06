@@ -91,16 +91,20 @@ class ChapterViewModel(
                         .filter {
                             it.title.contains(searchName, ignoreCase = true)
                         }.also { searchedChapters ->
+                            selectedPart = null
                             updateChapters(searchedChapters)
                         }
-                } ?: updateChapters(originalChapters.value)
+                } ?: run {
+                selectedPart = null
+                updateChapters(originalChapters.value)
+            }
         }
     }
 
     var selectedPart by mutableStateOf<Part?>(null)
         private set
 
-    fun onPartSelected(part: Part) {
+    fun onPartSelected(part: Part?) {
         viewModelScope.launch(Dispatchers.Default) {
             selectedPart = part
             updateChapters(originalChapters.value.filter { it.parts.contains(part) })
@@ -108,7 +112,7 @@ class ChapterViewModel(
     }
 
     private suspend fun updateChapters(newChapters: List<Chapter>) {
-        setSelectedIndex(-1)
+        setSelectedChapterIndex(-1)
         chapters.update { newChapters }
         playerRepo.setPlaylist(newChapters)
     }
@@ -116,7 +120,7 @@ class ChapterViewModel(
     var selectedChapterIndx by mutableIntStateOf(-1)
         private set
 
-    fun setSelectedIndex(index: Int) {
+    fun setSelectedChapterIndex(index: Int) {
         when (index) {
             -1 -> {
                 // deselect state. "reset"
