@@ -29,6 +29,15 @@ fun saleemFontFamily(): FontFamily = FontFamily(
     ),
 )
 
+val appFontFamily: FontFamily
+    @Composable
+    get() = saleemFontFamily()
+
+val chapterTitleTextStyle: TextStyle
+    @Composable
+    get() = if (Locale.current.language == "ar")
+        Typography.titleLarge.copy(fontFamily = icomoonFontFamily())
+    else Typography.titleLarge
 
 val digitsTextStyle: TextStyle
     @Composable
@@ -40,67 +49,67 @@ val Typography: Typography
     get() =
         Typography(
             displayLarge = Typography().displayLarge.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
             displayMedium = Typography().displayMedium.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
             displaySmall = Typography().displaySmall.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
 
             headlineLarge = Typography().headlineLarge.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
             headlineMedium = Typography().headlineMedium.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
             headlineSmall = Typography().headlineSmall.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp,
             ),
 
             titleLarge = Typography().titleLarge.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             titleMedium = Typography().titleMedium.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             titleSmall = Typography().titleSmall.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
 
             bodyLarge = Typography().bodyLarge.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             bodyMedium = Typography().bodyMedium.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             bodySmall = Typography().bodySmall.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
 
             labelLarge = Typography().labelLarge.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             labelMedium = Typography().labelMedium.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             ),
             labelSmall = Typography().labelSmall.copy(
-                fontFamily = saleemFontFamily(),
+                fontFamily = appFontFamily,
                 letterSpacing = 1.sp
             )
         )

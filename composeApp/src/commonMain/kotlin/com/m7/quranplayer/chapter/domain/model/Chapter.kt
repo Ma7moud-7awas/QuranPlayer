@@ -9,23 +9,27 @@ data class Chapter(
     val id: String,
     // localized representation of the id as chapter number.
     val number: String,
-    // localized chapter title
+    // localized chapter title.
     val title: String,
-
+    // title retriever from a special font, it should be used as a title string directly.
+    val titleByFontCode: String,
+    // runtime download state holder.
     val downloadState: DownloadState = DownloadState.NotDownloaded
 ) {
 
     companion object Builder {
         suspend fun build(
             id: Int,
-            getTitle: suspend (id: String) -> String,
-            getDownloadState: suspend (id: String) -> DownloadState
+            title: String,
+            titleFontCode: String,
+            getDownloadState: suspend (fileId: String) -> DownloadState
         ): Chapter {
             val formattedId = id.format("%03d")
             return Chapter(
                 id = formattedId,
                 number = id.localize(),
-                title = getTitle(formattedId),
+                title = title,
+                titleByFontCode = titleFontCode,
                 downloadState = getDownloadState(formattedId)
             )
         }

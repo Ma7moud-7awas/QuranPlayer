@@ -23,10 +23,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
-import quranplayer.composeapp.generated.resources.Res
-import quranplayer.composeapp.generated.resources.allStringResources
-import quranplayer.composeapp.generated.resources.chapter_number
 
 class ChapterViewModel(
     private val chapterRepo: ChapterRepo,
@@ -63,11 +59,6 @@ class ChapterViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             originalChapters.updateAndGet {
                 chapterRepo.getChapters(
-                    getChapterTitle = {
-                        getString(
-                            Res.allStringResources["_${it}"] ?: Res.string.chapter_number
-                        )
-                    },
                     getChapterDownloadState = {
                         downloaderRepo.getDownloadState(it)
                     }
@@ -239,7 +230,7 @@ class ChapterViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             if (start) {
                 downloadedAllEnabled = false
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
                     if (downloadState == DownloadState.NotDownloaded
                         || downloadState is DownloadState.Paused
                     ) {
@@ -248,7 +239,7 @@ class ChapterViewModel(
                 }
             } else {
                 downloadedAllEnabled = true
-                originalChapters.value.forEach { (id, _, _, downloadState) ->
+                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
                     if (downloadState is DownloadState.Downloading
                         || downloadState == DownloadState.Queued
                     ) {

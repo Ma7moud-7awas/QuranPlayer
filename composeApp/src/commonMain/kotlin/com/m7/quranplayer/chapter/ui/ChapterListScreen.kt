@@ -43,6 +43,7 @@ import com.m7.quranplayer.core.di.format
 import com.m7.quranplayer.core.ui.theme.LightGray
 import com.m7.quranplayer.core.ui.theme.Orange
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
+import com.m7.quranplayer.core.ui.theme.chapterTitleTextStyle
 import com.m7.quranplayer.downloader.domain.model.DownloadState
 import com.m7.quranplayer.downloader.domain.model.DownloaderAction
 import com.m7.quranplayer.downloader.ui.DownloadStack
@@ -65,7 +66,8 @@ val chaptersFakeList: List<Chapter>
                 Chapter(
                     fId,
                     "$i",
-                    stringResource(Res.allStringResources[fId] ?: return@buildList)
+                    stringResource(Res.allStringResources[fId] ?: return@buildList),
+                    ""
                 )
             )
         }
@@ -248,9 +250,9 @@ fun ChapterCard(
 
             // title
             Text(
-                text = chapter().title,
+                text = chapter().titleByFontCode,
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleLarge,
+                style = chapterTitleTextStyle,
                 modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp).weight(1f)
             )
 

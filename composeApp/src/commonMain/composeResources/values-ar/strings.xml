@@ -1,13 +1,13 @@
 <resources>
     <string name="saad_al_ghamdy">سعد الغامدي</string>
 
+    <string name="check_device_connection">تحقق من اتصال جهازك ثم اعد المحاولة</string>
+
     <string name="chapters">السور</string>
     <string name="search_by_name">ابحث بإسم السورة</string>
     <string name="language">اللغة</string>
     <string name="current_language">العربية</string>
     <string name="app_will_be_restarted">سيتم إعادة تشغيل التطبيق لتغيير اللغة</string>
-
-    <string name="check_device_connection">تحقق من اتصال جهازك ثم اعد المحاولة</string>
 
     <string name="downloads">التنزيلات</string>
     <string name="download_all">تنزيل الكل</string>
@@ -18,119 +18,240 @@
     <string name="could_not_download_chapter">لا يمكن تنزيل السورة، حاول في وقت لاحق</string>
     <string name="download_chapter_to_play_offline">نزل السورة لتشغيلها بدون انترنت</string>
 
-    <string name="chapter_number">سورة رقم %1$s</string>
-    <string name="_001">الفاتحة</string>
-    <string name="_002">البقرة</string>
-    <string name="_003">آل عمران</string>
-    <string name="_004">النساء</string>
-    <string name="_005">المائدة</string>
-    <string name="_006">الأنعام</string>
-    <string name="_007">الأعراف</string>
-    <string name="_008">الأنفال</string>
-    <string name="_009">التوبة</string>
-    <string name="_010">يونس</string>
-    <string name="_011">هود</string>
-    <string name="_012">يوسف</string>
-    <string name="_013">الرعد</string>
-    <string name="_014">ابراهيم</string>
-    <string name="_015">الحجر</string>
-    <string name="_016">النحل</string>
-    <string name="_017">الإسراء</string>
-    <string name="_018">الكهف</string>
-    <string name="_019">مريم</string>
-    <string name="_020">طه</string>
-    <string name="_021">الأنبياء</string>
-    <string name="_022">الحج</string>
-    <string name="_023">المؤمنون</string>
-    <string name="_024">النور</string>
-    <string name="_025">الفرقان</string>
-    <string name="_026">الشعراء</string>
-    <string name="_027">النمل</string>
-    <string name="_028">القصص</string>
-    <string name="_029">العنكبوت</string>
-    <string name="_030">الروم</string>
-    <string name="_031">لقمان</string>
-    <string name="_032">السجدة</string>
-    <string name="_033">الأحزاب</string>
-    <string name="_034">سبإ</string>
-    <string name="_035">فاطر</string>
-    <string name="_036">يس</string>
-    <string name="_037">الصافات</string>
-    <string name="_038">ص</string>
-    <string name="_039">الزمر</string>
-    <string name="_040">غافر</string>
-    <string name="_041">فصلت</string>
-    <string name="_042">الشورى</string>
-    <string name="_043">الزخرف</string>
-    <string name="_044">الدخان</string>
-    <string name="_045">الجاثية</string>
-    <string name="_046">الأحقاف</string>
-    <string name="_047">محمد</string>
-    <string name="_048">الفتح</string>
-    <string name="_049">الحجرات</string>
-    <string name="_050">ق</string>
-    <string name="_051">الذاريات</string>
-    <string name="_052">الطور</string>
-    <string name="_053">النجم</string>
-    <string name="_054">القمر</string>
-    <string name="_055">الرحمن</string>
-    <string name="_056">الواقعة</string>
-    <string name="_057">الحديد</string>
-    <string name="_058">المجادلة</string>
-    <string name="_059">الحشر</string>
-    <string name="_060">الممتحنة</string>
-    <string name="_061">الصف</string>
-    <string name="_062">الجمعة</string>
-    <string name="_063">المنافقون</string>
-    <string name="_064">التغابن</string>
-    <string name="_065">الطلاق</string>
-    <string name="_066">التحريم</string>
-    <string name="_067">الملك</string>
-    <string name="_068">القلم</string>
-    <string name="_069">الحاقة</string>
-    <string name="_070">المعارج</string>
-    <string name="_071">نوح</string>
-    <string name="_072">الجن</string>
-    <string name="_073">المزمل</string>
-    <string name="_074">المدثر</string>
-    <string name="_075">القيامة</string>
-    <string name="_076">الانسان</string>
-    <string name="_077">المرسلات</string>
-    <string name="_078">النبإ</string>
-    <string name="_079">النازعات</string>
-    <string name="_080">عبس</string>
-    <string name="_081">التكوير</string>
-    <string name="_082">الإنفطار</string>
-    <string name="_083">المطففين</string>
-    <string name="_084">الإنشقاق</string>
-    <string name="_085">البروج</string>
-    <string name="_086">الطارق</string>
-    <string name="_087">الأعلى</string>
-    <string name="_088">الغاشية</string>
-    <string name="_089">الفجر</string>
-    <string name="_090">البلد</string>
-    <string name="_091">الشمس</string>
-    <string name="_092">الليل</string>
-    <string name="_093">الضحى</string>
-    <string name="_094">الشرح</string>
-    <string name="_095">التين</string>
-    <string name="_096">العلق</string>
-    <string name="_097">القدر</string>
-    <string name="_098">البينة</string>
-    <string name="_099">الزلزلة</string>
-    <string name="_100">العاديات</string>
-    <string name="_101">القارعة</string>
-    <string name="_102">التكاثر</string>
-    <string name="_103">العصر</string>
-    <string name="_104">الهمزة</string>
-    <string name="_105">الفيل</string>
-    <string name="_106">قريش</string>
-    <string name="_107">الماعون</string>
-    <string name="_108">الكوثر</string>
-    <string name="_109">الكافرون</string>
-    <string name="_110">النصر</string>
-    <string name="_111">المسد</string>
-    <string name="_112">الإخلاص</string>
-    <string name="_113">الفلق</string>
-    <string name="_114">الناس</string>
+    <string-array name="chapters_names">
+        <item />
+        <item>الفاتحة</item>
+        <item>البقرة</item>
+        <item>آل عمران</item>
+        <item>النساء</item>
+        <item>المائدة</item>
+        <item>الأنعام</item>
+        <item>الأعراف</item>
+        <item>الأنفال</item>
+        <item>التوبة</item>
+        <item>يونس</item>
+        <item>هود</item>
+        <item>يوسف</item>
+        <item>الرعد</item>
+        <item>ابراهيم</item>
+        <item>الحجر</item>
+        <item>النحل</item>
+        <item>الإسراء</item>
+        <item>الكهف</item>
+        <item>مريم</item>
+        <item>طه</item>
+        <item>الأنبياء</item>
+        <item>الحج</item>
+        <item>المؤمنون</item>
+        <item>النور</item>
+        <item>الفرقان</item>
+        <item>الشعراء</item>
+        <item>النمل</item>
+        <item>القصص</item>
+        <item>العنكبوت</item>
+        <item>الروم</item>
+        <item>لقمان</item>
+        <item>السجدة</item>
+        <item>الأحزاب</item>
+        <item>سبإ</item>
+        <item>فاطر</item>
+        <item>يس</item>
+        <item>الصافات</item>
+        <item>ص</item>
+        <item>الزمر</item>
+        <item>غافر</item>
+        <item>فصلت</item>
+        <item>الشورى</item>
+        <item>الزخرف</item>
+        <item>الدخان</item>
+        <item>الجاثية</item>
+        <item>الأحقاف</item>
+        <item>محمد</item>
+        <item>الفتح</item>
+        <item>الحجرات</item>
+        <item>ق</item>
+        <item>الذاريات</item>
+        <item>الطور</item>
+        <item>النجم</item>
+        <item>القمر</item>
+        <item>الرحمن</item>
+        <item>الواقعة</item>
+        <item>الحديد</item>
+        <item>المجادلة</item>
+        <item>الحشر</item>
+        <item>الممتحنة</item>
+        <item>الصف</item>
+        <item>الجمعة</item>
+        <item>المنافقون</item>
+        <item>التغابن</item>
+        <item>الطلاق</item>
+        <item>التحريم</item>
+        <item>الملك</item>
+        <item>القلم</item>
+        <item>الحاقة</item>
+        <item>المعارج</item>
+        <item>نوح</item>
+        <item>الجن</item>
+        <item>المزمل</item>
+        <item>المدثر</item>
+        <item>القيامة</item>
+        <item>الانسان</item>
+        <item>المرسلات</item>
+        <item>النبإ</item>
+        <item>النازعات</item>
+        <item>عبس</item>
+        <item>التكوير</item>
+        <item>الإنفطار</item>
+        <item>المطففين</item>
+        <item>الإنشقاق</item>
+        <item>البروج</item>
+        <item>الطارق</item>
+        <item>الأعلى</item>
+        <item>الغاشية</item>
+        <item>الفجر</item>
+        <item>البلد</item>
+        <item>الشمس</item>
+        <item>الليل</item>
+        <item>الضحى</item>
+        <item>الشرح</item>
+        <item>التين</item>
+        <item>العلق</item>
+        <item>القدر</item>
+        <item>البينة</item>
+        <item>الزلزلة</item>
+        <item>العاديات</item>
+        <item>القارعة</item>
+        <item>التكاثر</item>
+        <item>العصر</item>
+        <item>الهمزة</item>
+        <item>الفيل</item>
+        <item>قريش</item>
+        <item>الماعون</item>
+        <item>الكوثر</item>
+        <item>الكافرون</item>
+        <item>النصر</item>
+        <item>المسد</item>
+        <item>الإخلاص</item>
+        <item>الفلق</item>
+        <item>الناس</item>
+    </string-array>
+
+    <string-array name="chapters_font_codes">
+        <item />
+        <item>\uE904</item>
+        <item>\uE905</item>
+        <item>\uE906</item>
+        <item>\uE907</item>
+        <item>\uE908</item>
+        <item>\uE90B</item>
+        <item>\uE90C</item>
+        <item>\uE90D</item>
+        <item>\uE90E</item>
+        <item>\uE90F</item>
+        <item>\uE910</item>
+        <item>\uE911</item>
+        <item>\uE912</item>
+        <item>\uE913</item>
+        <item>\uE914</item>
+        <item>\uE915</item>
+        <item>\uE916</item>
+        <item>\uE917</item>
+        <item>\uE918</item>
+        <item>\uE919</item>
+        <item>\uE91A</item>
+        <item>\uE91B</item>
+        <item>\uE91C</item>
+        <item>\uE91D</item>
+        <item>\uE91E</item>
+        <item>\uE91F</item>
+        <item>\uE920</item>
+        <item>\uE921</item>
+        <item>\uE922</item>
+        <item>\uE923</item>
+        <item>\uE924</item>
+        <item>\uE925</item>
+        <item>\uE926</item>
+        <item>\uE92E</item>
+        <item>\uE92F</item>
+        <item>\uE930</item>
+        <item>\uE931</item>
+        <item>\uE909</item>
+        <item>\uE90A</item>
+        <item>\uE927</item>
+        <item>\uE928</item>
+        <item>\uE929</item>
+        <item>\uE92A</item>
+        <item>\uE92B</item>
+        <item>\uE92C</item>
+        <item>\uE92D</item>
+        <item>\uE932</item>
+        <item>\uE902</item>
+        <item>\uE933</item>
+        <item>\uE934</item>
+        <item>\uE935</item>
+        <item>\uE936</item>
+        <item>\uE937</item>
+        <item>\uE938</item>
+        <item>\uE939</item>
+        <item>\uE93A</item>
+        <item>\uE93B</item>
+        <item>\uE93C</item>
+        <item>\uE900</item>
+        <item>\uE901</item>
+        <item>\uE941</item>
+        <item>\uE942</item>
+        <item>\uE943</item>
+        <item>\uE944</item>
+        <item>\uE945</item>
+        <item>\uE946</item>
+        <item>\uE947</item>
+        <item>\uE948</item>
+        <item>\uE949</item>
+        <item>\uE94A</item>
+        <item>\uE94B</item>
+        <item>\uE94C</item>
+        <item>\uE94D</item>
+        <item>\uE94E</item>
+        <item>\uE94F</item>
+        <item>\uE950</item>
+        <item>\uE951</item>
+        <item>\uE952</item>
+        <item>\uE93D</item>
+        <item>\uE93E</item>
+        <item>\uE93F</item>
+        <item>\uE940</item>
+        <item>\uE953</item>
+        <item>\uE954</item>
+        <item>\uE955</item>
+        <item>\uE956</item>
+        <item>\uE957</item>
+        <item>\uE958</item>
+        <item>\uE959</item>
+        <item>\uE95A</item>
+        <item>\uE95B</item>
+        <item>\uE95C</item>
+        <item>\uE95D</item>
+        <item>\uE95E</item>
+        <item>\uE95F</item>
+        <item>\uE960</item>
+        <item>\uE961</item>
+        <item>\uE962</item>
+        <item>\uE963</item>
+        <item>\uE964</item>
+        <item>\uE965</item>
+        <item>\uE966</item>
+        <item>\uE967</item>
+        <item>\uE968</item>
+        <item>\uE969</item>
+        <item>\uE96A</item>
+        <item>\uE96B</item>
+        <item>\uE96C</item>
+        <item>\uE96D</item>
+        <item>\uE96E</item>
+        <item>\uE96F</item>
+        <item>\uE970</item>
+        <item>\uE971</item>
+        <item>\uE972</item>
+        <item>\uE973</item>
+    </string-array>
 </resources>
