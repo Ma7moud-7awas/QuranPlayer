@@ -12,7 +12,9 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import platform.AVFoundation.AVPlayerActionAtItemEndNone
 import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVQueuePlayer
@@ -24,12 +26,15 @@ import platform.AVFoundation.pause
 import platform.AVFoundation.play
 import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
+import platform.AVFoundation.setActionAtItemEnd
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSKeyValueChangeNewKey
 import platform.Foundation.NSKeyValueObservingOptionNew
+import platform.Foundation.NSNotificationCenter
 import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
 import platform.darwin.NSObject
+import platform.darwin.NSObjectProtocol
 import platform.foundation.NSKeyValueObservingProtocol
 
 @OptIn(ExperimentalForeignApi::class)
@@ -46,8 +51,9 @@ class IOSPlayerSource(
     private var playerItems: List<PlayerItem> = listOf()
     private var currentItemIndex = -1
     private var repeatMode = RepeatMode.None
-    private var callingNext = false
 
+    private val notificationCenter = NSNotificationCenter.defaultCenter
+    private var playToEndObserver: NSObjectProtocol? = null
     private var playerRateObserver = NSObject()
     private var itemStatusObserver = NSObject()
     private var currentItemObserver = NSObject()
@@ -121,22 +127,16 @@ class IOSPlayerSource(
                     Log("onCurrentItemChanged -> currentItem= $change")
                     if (keyPath == "currentItem") {
                         (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)?.let { newItem ->
-                            player?.pause()
-
                             newItem.toPlayerItem()?.let {
                                 // updating index
                                 currentItemIndex = playerItems.indexOf(it)
-                                // add observer to the new item
-                                addItemStatusObserver(newItem)
 
-                                if (!callingNext && repeatMode == RepeatMode.One) {
-                                    // reselect & play the previous item
-                                    previous()
-                                } else {
-                                    callingNext = false
-                                    // play the new item
-                                    player?.play()
-                                }
+                                // add observers to the new item
+                                addItemStatusObserver(newItem)
+                                addItemPlayToEndObserver(newItem)
+
+                                // start
+                                player?.play()
                             }
                         }
                     }
@@ -163,6 +163,8 @@ class IOSPlayerSource(
                 )
 
                 addItemStatusObserver(it.currentItem)
+
+                addItemPlayToEndObserver(it.currentItem)
             }
         }
     }
@@ -177,12 +179,38 @@ class IOSPlayerSource(
         )
     }
 
+    private fun addItemPlayToEndObserver(item: AVPlayerItem?) {
+        Log("addItemPlayToEndObserver")
+        playToEndObserver = notificationCenter.addObserverForName(
+            AVPlayerItemDidPlayToEndTimeNotification,
+            item,
+            null
+        ) { notification ->
+            scope.launch {
+                Log("onPlayToEnd -> notification= $notification")
+                if (repeatMode == RepeatMode.One) {
+                    // replay
+                    seekTo(0)
+
+                } else if (currentItemIndex == playerItems.lastIndex) {
+                    // stopped
+                    sendState(PlayerState.Ended)
+
+                } else {
+                    // advance
+                    player?.advanceToNextItem()
+                }
+            }
+        }
+    }
+
     private fun removeObservers() {
         player?.also {
             it.removeObserver(playerRateObserver, "rate")
-            it.removeObserver(currentItemObserver, "currentItem")
             it.currentItem?.removeObserver(itemStatusObserver, "status")
+            it.removeObserver(currentItemObserver, "currentItem")
         }
+        playToEndObserver?.also { notificationCenter.removeObserver(it) }
     }
 
     private fun checkItemStatus() {
@@ -269,6 +297,7 @@ class IOSPlayerSource(
         player?.removeAllItems()
 
         player = AVQueuePlayer(items.map { it.toAVPlayerItem() })
+        player?.setActionAtItemEnd(AVPlayerActionAtItemEndNone)
         addObservers()
     }
 
@@ -289,7 +318,6 @@ class IOSPlayerSource(
                 if (currentItemIndex < playerItems.lastIndex)
                     play(currentItemIndex + 1)
             } else {
-                callingNext = true
                 player?.advanceToNextItem()
             }
         }
