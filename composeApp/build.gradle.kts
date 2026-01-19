@@ -76,6 +76,7 @@ kotlin {
                     implementation(androidx.media3.workmanager)
                     implementation(ktor.okhttp)
                     implementation(koin.android)
+                    implementation(play.ads)
                 }
             }
         }

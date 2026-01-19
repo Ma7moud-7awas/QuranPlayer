@@ -120,26 +120,25 @@ class IOSPlayerSource(
                 scope.launch {
                     Log("onCurrentItemChanged -> currentItem= $change")
                     if (keyPath == "currentItem") {
-                        (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)
-                            ?.let { newItem ->
-                                player?.pause()
+                        (change?.get(NSKeyValueChangeNewKey) as? AVPlayerItem)?.let { newItem ->
+                            player?.pause()
 
-                                newItem.toPlayerItem()?.let {
-                                    // updating index
-                                    currentItemIndex = playerItems.indexOf(it)
-                                    // add observer to the new item
-                                    addItemStatusObserver(newItem)
+                            newItem.toPlayerItem()?.let {
+                                // updating index
+                                currentItemIndex = playerItems.indexOf(it)
+                                // add observer to the new item
+                                addItemStatusObserver(newItem)
 
-                                    if (!callingNext && repeatMode == RepeatMode.One) {
-                                        // reselect & play the previous item
-                                        previous()
-                                    } else {
-                                        callingNext = false
-                                        // play the new item
-                                        player?.play()
-                                    }
+                                if (!callingNext && repeatMode == RepeatMode.One) {
+                                    // reselect & play the previous item
+                                    previous()
+                                } else {
+                                    callingNext = false
+                                    // play the new item
+                                    player?.play()
                                 }
                             }
+                        }
                     }
                 }
             }
@@ -249,7 +248,9 @@ class IOSPlayerSource(
 
     override suspend fun play(selectedIndex: Int) {
         scope.launch {
-            if (selectedIndex != currentItemIndex)
+            if (selectedIndex != currentItemIndex ||
+                playerItems[selectedIndex].id != player?.currentItem?.toPlayerItem()?.id
+            )
                 getQueueByStartIndex(selectedIndex).let {
                     currentItemIndex = selectedIndex
                     resetPlayer(it)

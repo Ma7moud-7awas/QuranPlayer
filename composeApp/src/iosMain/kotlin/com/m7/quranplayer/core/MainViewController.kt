@@ -8,6 +8,9 @@ import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.setActive
 import platform.Foundation.NSUserDefaults
+import platform.UIKit.UIViewController
+
+lateinit var BannerContainer: (Int) -> UIViewController
 
 @OptIn(ExperimentalForeignApi::class)
 fun MainViewController() = ComposeUIViewController {

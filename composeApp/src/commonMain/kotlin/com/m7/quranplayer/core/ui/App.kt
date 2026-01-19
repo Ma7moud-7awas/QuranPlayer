@@ -64,7 +64,7 @@ fun App(
             val coroutineScope = rememberCoroutineScope()
             val listState = rememberLazyListState()
             var selectedIndex by remember { mutableIntStateOf(-1) }
-            val isPlayingItemInvisible by remember {
+            val isSelectedItemInvisible by remember {
                 derivedStateOf {
                     selectedIndex > -1 && !isItemVisible(selectedIndex, listState)
                 }
@@ -77,7 +77,8 @@ fun App(
                     // error/scroll indicator
                     if (error != null) {
                         ErrorButton()
-                    } else if (isPlayingItemInvisible) {
+
+                    } else if (isSelectedItemInvisible) {
                         ScrollButton {
                             coroutineScope.launch {
                                 listState.animateScrollToItem(selectedIndex + 1)
