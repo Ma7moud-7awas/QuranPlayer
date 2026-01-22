@@ -18,11 +18,22 @@
 		F5529EFB2C10772A0FC17B21 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ad/NativeAdView.xib,
 				Info.plist,
 			);
 			target = 5407C8798D46607E7CDD6AC3 /* iosApp */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		ED5D55312F1FA534008C9DD4 /* Exceptions for "iosApp" folder in "Compile Sources" phase from "iosApp" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 50BAD06AA91737F6D90D21F6 /* Sources */;
+			membershipExceptions = (
+				ad/NativeAdView.xib,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		760F811C2B54E7B0E2ACA04A /* Configuration */ = {
@@ -34,6 +45,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				F5529EFB2C10772A0FC17B21 /* Exceptions for "iosApp" folder in "iosApp" target */,
+				ED5D55312F1FA534008C9DD4 /* Exceptions for "iosApp" folder in "Compile Sources" phase from "iosApp" target */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";

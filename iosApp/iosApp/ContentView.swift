@@ -16,8 +16,22 @@ struct ContentView: View {
     init() {
         MobileAds.shared.start()
 
-        MainViewControllerKt.BannerContainer = { (adWidth: KotlinInt) -> UIViewController in
+        MainViewControllerKt.AdBannerContainer = { (adWidth: KotlinInt) -> UIViewController in
             return UIHostingController(rootView: AdBannerView(adWidth.intValue))
+        }
+
+        MainViewControllerKt.loadNativeAd = { (updateSate) -> Void in
+            NativeAdViewModel.updateAdState = { state in
+                updateSate(state)
+            }
+
+            NativeAdViewModel.shared.loadAd()
+        }
+
+        MainViewControllerKt.AdNativeContainer = { () -> UIViewController in
+            return (UIHostingController(rootView: AdNativeView(
+                nativeViewModel: NativeAdViewModel.shared
+            )))
         }
     }
 
