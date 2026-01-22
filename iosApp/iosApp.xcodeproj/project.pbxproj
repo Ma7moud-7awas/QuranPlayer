@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ED42AED92F1BA91100F1842C /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = ED42AED82F1BA91100F1842C /* GoogleMobileAds */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		47FC2ADDF495314818892415 /* QuranPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuranPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -14,11 +18,22 @@
 		F5529EFB2C10772A0FC17B21 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ad/NativeAdView.xib,
 				Info.plist,
 			);
 			target = 5407C8798D46607E7CDD6AC3 /* iosApp */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		ED5D55312F1FA534008C9DD4 /* Exceptions for "iosApp" folder in "Compile Sources" phase from "iosApp" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 50BAD06AA91737F6D90D21F6 /* Sources */;
+			membershipExceptions = (
+				ad/NativeAdView.xib,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		760F811C2B54E7B0E2ACA04A /* Configuration */ = {
@@ -30,6 +45,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				F5529EFB2C10772A0FC17B21 /* Exceptions for "iosApp" folder in "iosApp" target */,
+				ED5D55312F1FA534008C9DD4 /* Exceptions for "iosApp" folder in "Compile Sources" phase from "iosApp" target */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -41,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ED42AED92F1BA91100F1842C /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +102,7 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				ED42AED82F1BA91100F1842C /* GoogleMobileAds */,
 			);
 			productName = iosApp;
 			productReference = 47FC2ADDF495314818892415 /* QuranPlayer.app */;
@@ -115,6 +133,9 @@
 			);
 			mainGroup = E26ACD6E13FB79848D9D9E2C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				ED42AED72F1BA91100F1842C /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7014531F2ED3152F4CB88BB6 /* Products */;
 			projectDirPath = "";
@@ -379,6 +400,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		ED42AED72F1BA91100F1842C /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ED42AED82F1BA91100F1842C /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ED42AED72F1BA91100F1842C /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A2D1117A24A1A9957B31F8D9 /* Project object */;
 }

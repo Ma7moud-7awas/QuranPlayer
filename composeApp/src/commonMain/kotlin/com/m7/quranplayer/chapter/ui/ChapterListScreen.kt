@@ -3,9 +3,12 @@ package com.m7.quranplayer.chapter.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -35,8 +39,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m7.quranplayer.ads.AdState
+import com.m7.quranplayer.ads.ui.AdBanner
+import com.m7.quranplayer.ads.ui.AdNative
+import com.m7.quranplayer.ads.ui.loadAd
 import com.m7.quranplayer.chapter.domain.model.Chapter
 import com.m7.quranplayer.chapter.ui.toolbar.ChaptersToolbar
 import com.m7.quranplayer.core.di.format
@@ -50,6 +60,9 @@ import com.m7.quranplayer.downloader.ui.DownloadStack
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.ui.PlayerStack
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
@@ -100,7 +113,7 @@ fun ChapterListScreen(
     val chapterViewModel: ChapterViewModel = koinViewModel()
 
     val chapters by chapterViewModel.chapters.collectAsStateWithLifecycle()
-    val playerState by chapterViewModel.playerState.collectAsStateWithLifecycle()
+    val playerState = chapterViewModel.playerState
 
     LaunchedEffect(playerState) { onStateChanged(playerState) }
 
@@ -135,15 +148,70 @@ fun ChapterListScreen(
         }
 
         itemsIndexed(chapters, key = { _, chapter -> chapter.id }) { i, chapter ->
-            ChapterItem(
-                chapter = { chapter },
-                isSelected = { chapterViewModel.selectedChapterIndx == i },
-                playerState = { playerState },
-                playerAction = chapterViewModel::playerAction,
-                downloaderAction = chapterViewModel::downloaderAction,
-                isRepeatEnabled = { chapterViewModel.repeatEnabled },
-                onCardClicked = { chapterViewModel.setSelectedIndex(i) }
-            )
+            val isSelected = i == chapterViewModel.selectedChapterIndx
+
+            Column {
+                ChapterItem(
+                    chapter = { chapter },
+                    isSelected = { isSelected },
+                    playerState = { playerState },
+                    playerAction = chapterViewModel::playerAction,
+                    downloaderAction = chapterViewModel::downloaderAction,
+                    isRepeatEnabled = { chapterViewModel.repeatEnabled },
+                    onCardClicked = { chapterViewModel.setSelectedIndex(i) }
+                )
+
+                AdItem(isSelected = { isSelected })
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AdItem_Preview() {
+    AdItem(isSelected = { true })
+}
+
+@Composable
+fun AdItem(
+    isSelected: () -> Boolean,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    var adWidth by remember { mutableStateOf<Int?>(null) }
+    var adState by remember { mutableStateOf<AdState?>(null) }
+
+    if (isSelected()) {
+        OutlinedCard(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .let {
+                    it.onGloballyPositioned { coordinates ->
+                        adWidth = with(density) {
+                            coordinates.size.width.toDp().value.toInt()
+                        }
+                    }
+                }
+        ) {
+            LaunchedEffect(Unit) {
+                launch(Dispatchers.IO) {
+                    loadAd { adState = it }
+                }
+            }
+
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                when (adState) {
+                    AdState.Loading -> CircularProgressIndicator()
+                    AdState.Success -> AdNative(Modifier.fillMaxWidth().aspectRatio(1f))
+                    AdState.Failed -> adWidth?.let { AdBanner(it) }
+                    else -> {}
+                }
+            }
         }
     }
 }

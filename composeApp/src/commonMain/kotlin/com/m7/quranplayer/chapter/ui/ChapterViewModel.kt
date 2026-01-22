@@ -104,7 +104,7 @@ class ChapterViewModel(
                 playerAction(PlayerAction.Pause)
             }
 
-            selectedChapterIndx if playerState.value is PlayerState.Playing -> {
+            selectedChapterIndx if playerState is PlayerState.Playing -> {
                 // pause the same chapter.
                 playerAction(PlayerAction.Pause)
             }
@@ -112,24 +112,23 @@ class ChapterViewModel(
             else -> {
                 // play a new chapter.
                 selectedChapterIndx = index
-                playerAction(PlayerAction.Play)
                 resetPlayerState()
+                playerAction(PlayerAction.Play)
             }
         }
     }
 
-    val playerState: StateFlow<PlayerState>
-        field = MutableStateFlow<PlayerState>(PlayerState.Idle)
+    var playerState by mutableStateOf<PlayerState>(PlayerState.Idle)
 
     private fun resetPlayerState() {
-        playerState.update { PlayerState.Loading }
+        playerState = PlayerState.Loading
     }
 
     private fun collectPlayerStateUpdates() {
         viewModelScope.launch(Dispatchers.Default) {
             playerRepo.playerState.collectLatest { (idx, state) ->
                 selectedChapterIndx = idx
-                playerState.update { state }
+                playerState = state
             }
         }
     }

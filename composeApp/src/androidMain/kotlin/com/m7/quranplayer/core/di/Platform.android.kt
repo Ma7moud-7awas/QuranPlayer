@@ -1,6 +1,7 @@
 package com.m7.quranplayer.core.di
 
 import androidx.media3.common.Player
+import com.m7.quranplayer.ads.ui.AdHolder
 import com.m7.quranplayer.downloader.data.AndroidDownloaderSource
 import com.m7.quranplayer.downloader.data.DownloadUtil
 import com.m7.quranplayer.downloader.data.DownloaderSource
@@ -20,6 +21,8 @@ actual val platformModule = module {
     single<PlayerSource> { AndroidPlayerSource(androidContext()) }
 
     single<DownloaderSource> { AndroidDownloaderSource(androidContext(), get()) }
+
+    single<AdHolder> { AdHolder(androidContext()) }
 }
 
 actual fun Int.format(format: String) = String.format(Locale.ROOT, format, this)
