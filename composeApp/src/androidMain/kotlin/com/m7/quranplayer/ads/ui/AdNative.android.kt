@@ -51,7 +51,7 @@ actual fun AdNative(modifier: Modifier) {
                         starRating?.let {
                             AdStarRatingView {
                                 Text(
-                                    text = "Rated $it",
+                                    text = "$it",
                                     style = MaterialTheme.typography.labelMedium
                                 )
                             }

@@ -178,20 +178,18 @@ fun AdItem(
     isSelected: () -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
-    var adWidth by remember { mutableStateOf<Int?>(null) }
-    var adState by remember { mutableStateOf<AdState?>(null) }
-
     if (isSelected()) {
+        val density = LocalDensity.current
+        var adWidth by remember { mutableStateOf<Int?>(null) }
+        var adState by remember { mutableStateOf<AdState?>(null) }
+
         OutlinedCard(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 12.dp)
-                .let {
-                    it.onGloballyPositioned { coordinates ->
-                        adWidth = with(density) {
-                            coordinates.size.width.toDp().value.toInt()
-                        }
+                .onGloballyPositioned { coordinates ->
+                    adWidth = with(density) {
+                        coordinates.size.width.toDp().value.toInt()
                     }
                 }
         ) {
@@ -206,10 +204,10 @@ fun AdItem(
                 contentAlignment = Alignment.Center
             ) {
                 when (adState) {
-                    AdState.Loading -> CircularProgressIndicator()
+                    AdState.Loading -> CircularProgressIndicator(Modifier.padding(15.dp))
                     AdState.Success -> AdNative(Modifier.fillMaxWidth().aspectRatio(1f))
                     AdState.Failed -> adWidth?.let { AdBanner(it) }
-                    else -> {}
+                    else -> Unit
                 }
             }
         }

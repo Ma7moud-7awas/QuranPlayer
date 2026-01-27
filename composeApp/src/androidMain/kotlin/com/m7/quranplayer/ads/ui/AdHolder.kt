@@ -6,7 +6,6 @@ import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.m7.quranplayer.ads.AdState
 import org.koin.java.KoinJavaComponent.inject
 
@@ -29,7 +28,6 @@ class AdHolder (private val context: Context) {
                     updateAdState(AdState.Failed)
                 }
             })
-            .withNativeAdOptions(NativeAdOptions.Builder().setMediaAspectRatio(2).build())
             .build()
 
         adLoader.loadAd(AdRequest.Builder().build())
