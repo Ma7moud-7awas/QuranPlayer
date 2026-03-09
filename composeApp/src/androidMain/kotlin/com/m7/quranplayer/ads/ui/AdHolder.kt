@@ -9,6 +9,8 @@ import com.google.android.gms.ads.nativead.NativeAd
 import com.m7.quranplayer.ads.AdState
 import org.koin.java.KoinJavaComponent.inject
 
+const val NativeAdId = "ca-app-pub-3940256099942544/2247696110"
+
 class AdHolder (private val context: Context) {
     companion object Companion {
         val instance :AdHolder by inject(AdHolder::class.java)
@@ -18,7 +20,7 @@ class AdHolder (private val context: Context) {
 
     fun loadNativeAd(updateAdState: (AdState) -> Unit) {
         updateAdState(AdState.Loading)
-        val adLoader = AdLoader.Builder(context, "ca-app-pub-3940256099942544/2247696110")
+        val adLoader = AdLoader.Builder(context, NativeAdId)
             .forNativeAd { nativeAd ->
                 this.nativeAd = nativeAd
                 updateAdState(AdState.Success)

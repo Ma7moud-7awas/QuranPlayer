@@ -7,15 +7,17 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 
+const val BannerAdId = "ca-app-pub-3940256099942544/9214589741"
+
 @Composable
 actual fun AdBanner(adWidth: Int, modifier: Modifier) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
             AdView(context).apply {
-                adUnitId = "ca-app-pub-3940256099942544/9214589741"
+                adUnitId = BannerAdId
                 setAdSize(
-                    AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidth)
+                    AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(context, adWidth)
                 )
                 loadAd(AdRequest.Builder().build())
             }

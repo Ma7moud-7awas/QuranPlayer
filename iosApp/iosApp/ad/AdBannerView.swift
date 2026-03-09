@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 import GoogleMobileAds
 
+let BannerAdId = "ca-app-pub-3940256099942544/2435281174"
+
 struct AdBannerView: UIViewRepresentable {
     typealias UIViewType = BannerView
     let adWidth: Int
@@ -17,7 +19,7 @@ struct AdBannerView: UIViewRepresentable {
     func makeUIView(context: Context) -> BannerView {
         let banner = BannerView(adSize: currentOrientationAnchoredAdaptiveBanner(width: CGFloat(adWidth)))
 
-        banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
+        banner.adUnitID = BannerAdId
         banner.load(Request())
         banner.delegate = context.coordinator
         return banner

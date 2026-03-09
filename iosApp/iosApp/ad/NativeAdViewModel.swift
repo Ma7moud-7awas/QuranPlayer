@@ -3,6 +3,8 @@ import SwiftUI
 import ComposeApp
 import GoogleMobileAds
 
+let NativeAdId = "ca-app-pub-3940256099942544/3986624511"
+
 final class NativeAdViewModel: NSObject, ObservableObject, NativeAdLoaderDelegate, NativeAdDelegate {
     static let shared = NativeAdViewModel()
 
@@ -13,7 +15,7 @@ final class NativeAdViewModel: NSObject, ObservableObject, NativeAdLoaderDelegat
     func loadAd() {
         NativeAdViewModel.updateAdState?(AdState.loading)
         adLoader = AdLoader(
-            adUnitID: "ca-app-pub-3940256099942544/3986624511",
+            adUnitID: NativeAdId,
             rootViewController: nil,
             adTypes: [.native], options: nil
         )
