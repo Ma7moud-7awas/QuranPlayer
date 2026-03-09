@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material3.Card
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m7.quranplayer.ads.AdState
@@ -62,12 +64,10 @@ import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.ui.PlayerStack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import quranplayer.composeapp.generated.resources.Res
-import quranplayer.composeapp.generated.resources.allStringResources
 import quranplayer.composeapp.generated.resources.chapters
 
 val chaptersFakeList: List<Chapter>
@@ -79,7 +79,8 @@ val chaptersFakeList: List<Chapter>
                 Chapter(
                     fId,
                     "$i",
-                    stringResource(Res.allStringResources[fId] ?: return@buildList),
+//                    stringResource(Res.allStringResources[fId] ?: return@buildList),
+                    "al fateha",
                     ""
                 )
             )
@@ -87,7 +88,7 @@ val chaptersFakeList: List<Chapter>
     }
 
 
-//@Preview(showBackground = true, locale = "ar")
+@Preview(showBackground = true, locale = "ar")
 @Composable
 private fun ChapterListScreenPreview() {
     QuranPlayerTheme {
@@ -277,7 +278,7 @@ fun ChapterItem(
 @Composable
 private fun ChapterCard() {
     QuranPlayerTheme {
-        val chapter = chaptersFakeList[2]
+        val chapter = chaptersFakeList[2].copy(downloadState = DownloadState.Downloading(flowOf(.5f)))
         ChapterCard(
             { chapter },
             { false },
@@ -299,8 +300,11 @@ fun ChapterCard(
     )
 
     val downloadIcon =
-        if (chapter().downloadState is DownloadState.Completed) Icons.Rounded.DownloadDone
-        else Icons.Rounded.Download
+        when (chapter().downloadState) {
+            is DownloadState.Completed -> Icons.Rounded.DownloadDone
+            is DownloadState.Downloading -> Icons.Rounded.CloudDownload
+            else -> Icons.Rounded.Download
+        }
 
     Card(
         colors = CardDefaults.cardColors().copy(containerColor = cardBgColor),

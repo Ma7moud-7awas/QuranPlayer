@@ -9,7 +9,7 @@ import com.m7.quranplayer.downloader.data.DownloaderRepoImpl
 import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 
@@ -21,7 +21,7 @@ fun initKoin(appDeclaration: (KoinApplication.() -> Unit)? = null) {
             modules(
                 platformModule,
                 module {
-                    viewModelOf(::ChapterViewModel)
+                    viewModel { ChapterViewModel(get(), get(), get()) }
 
                     single<ChapterRepo> { ChaptersRepoImpl() }
                     single<PlayerRepo> { PlayerRepoImpl(get()) }

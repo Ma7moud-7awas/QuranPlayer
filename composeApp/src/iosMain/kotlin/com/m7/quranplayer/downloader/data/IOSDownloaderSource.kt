@@ -1,9 +1,9 @@
 package com.m7.quranplayer.downloader.data
 
+import co.touchlab.stately.collections.ConcurrentMutableMap
 import com.m7.quranplayer.core.Log.log
 import com.m7.quranplayer.downloader.data.model.Download
 import com.m7.quranplayer.downloader.domain.model.DownloadState
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -24,15 +24,18 @@ import platform.Foundation.NSURLSessionTaskStateSuspended
 import platform.Foundation.downloadTaskWithResumeData
 import platform.Foundation.downloadTaskWithURL
 
-@OptIn(ExperimentalForeignApi::class)
+const val maxParalleledDownloadingTasks = 3
+
 class IOSDownloaderSource(
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val scope: CoroutineScope = CoroutineScope(
+        Dispatchers.IO.limitedParallelism(maxParalleledDownloadingTasks)
+    )
 ) : DownloaderSource {
 
     override val downloadState: Channel<Pair<String, DownloadState>> = Channel(CONFLATED)
 
     val session = NSURLSession.sharedSession
-    var downloads: MutableMap<String, Download> = mutableMapOf()
+    var downloads: ConcurrentMutableMap<String, Download?> = ConcurrentMutableMap()
 
     override suspend fun getDownloadState(id: String): DownloadState {
         return downloads[id]?.state
@@ -46,7 +49,7 @@ class IOSDownloaderSource(
     }
 
     override suspend fun getDownloadedCount(): Int {
-        return downloads.values.count { it.state == DownloadState.Completed }
+        return downloads.values.count { it?.state == DownloadState.Completed }
     }
 
     override suspend fun start(id: String, url: String) {
@@ -54,8 +57,10 @@ class IOSDownloaderSource(
             // resume paused download
             if (it.state is DownloadState.Paused) {
                 DownloadManager.getDownloadData(id)?.let { resumeData ->
-                    it.task = session.downloadTaskWithResumeData(resumeData, completionHandler(id))
-                    it.state = DownloadState.Queued
+                    downloads[id] = it.copy(
+                        state = DownloadState.Queued,
+                        task = session.downloadTaskWithResumeData(resumeData, completionHandler(id))
+                    )
                 }
             } else null
         } ?: run {
@@ -100,33 +105,35 @@ class IOSDownloaderSource(
     }
 
     private fun runQueuedTasks() {
-        val runningTasksCount = downloads.values.count {
-            it.task?.state == NSURLSessionTaskStateRunning
-        }
-        if (runningTasksCount < 3) {
-            downloads.values.firstOrNull { it.state == DownloadState.Queued }
-                ?.also {
-                    runTask(it.id)
-                }
+        scope.launch {
+            val runningTasksCount = downloads.values.count {
+                it?.task?.state == NSURLSessionTaskStateRunning
+            }
+
+            if (runningTasksCount < maxParalleledDownloadingTasks) {
+                downloads.values
+                    .firstOrNull { it?.state == DownloadState.Queued }
+                    ?.let {
+                        runTask(it.id)
+                    }
+            }
         }
     }
 
-    private fun runTask(id: String) {
-        scope.launch {
-            // fire
-            downloads[id]?.task?.resume()
-            // fetch updates
-            while (downloads[id]?.task?.state == NSURLSessionTaskStateRunning) {
-                downloads[id]?.also {
-                    if (it.state !is DownloadState.Downloading) {
-                        it.task?.also {
-                            updateDownloadState(id, it.getDownloadState(id))
-                        }
+    private suspend fun runTask(id: String) {
+        // fire
+        downloads[id]?.task?.resume()
+        // fetch updates
+        while (downloads[id]?.task?.state == NSURLSessionTaskStateRunning) {
+            downloads[id]?.also {
+                if (it.state !is DownloadState.Downloading) {
+                    it.task?.also {
+                        updateDownloadState(id, it.getDownloadState(id))
                     }
                 }
-
-                delay(1000)
             }
+
+            delay(1000)
         }
     }
 
@@ -135,8 +142,8 @@ class IOSDownloaderSource(
             NSURLSessionTaskStateRunning -> DownloadState.Downloading(
                 flow {
                     while (progress.fractionCompleted < 100) {
-                        delay(50)
                         emit(progress.fractionCompleted.toFloat())
+                        delay(50)
                     }
                 }
             )
@@ -152,7 +159,7 @@ class IOSDownloaderSource(
     private fun updateDownloadState(id: String, state: DownloadState) {
         downloads[id]?.let {
             // update local map
-            it.state = state
+            downloads[id] = it.copy(state = state)
             // notify the UI
             downloadState.trySend(id to state)
         }
@@ -166,8 +173,6 @@ class IOSDownloaderSource(
                     data?.also { DownloadManager.saveDownloadData(id, data, progress) }
 
                     updateDownloadState(id, DownloadState.Paused((progress)))
-
-                    runQueuedTasks()
                 }
             }
         }
@@ -184,7 +189,5 @@ class IOSDownloaderSource(
         }
         // update state
         downloadState.trySend(id to DownloadState.NotDownloaded)
-
-        runQueuedTasks()
     }
 }

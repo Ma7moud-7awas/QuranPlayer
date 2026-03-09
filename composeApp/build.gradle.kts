@@ -43,6 +43,7 @@ kotlin {
                     implementation(ui)
                     implementation(components.resources)
                     implementation(components.uiToolingPreview)
+                    implementation(compose.preview)
                 }
                 with(libs) {
                     implementation(androidx.lifecycle.viewmodelCompose)
@@ -66,7 +67,6 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation(compose.preview)
                 with(libs) {
                     implementation(androidx.appcompat)
                     implementation(androidx.activity.compose)

@@ -5,6 +5,6 @@ import platform.Foundation.NSURLSessionDownloadTask
 
 data class Download(
     val id: String,
-    var state: DownloadState,
-    var task: NSURLSessionDownloadTask? = null,
+    val state: DownloadState,
+    val task: NSURLSessionDownloadTask? = null,
 )

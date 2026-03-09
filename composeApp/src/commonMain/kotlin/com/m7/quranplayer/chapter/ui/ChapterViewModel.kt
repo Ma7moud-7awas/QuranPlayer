@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7.quranplayer.chapter.domain.model.Chapter
@@ -15,6 +16,7 @@ import com.m7.quranplayer.downloader.domain.repo.DownloaderRepo
 import com.m7.quranplayer.player.domain.model.PlayerAction
 import com.m7.quranplayer.player.domain.model.PlayerState
 import com.m7.quranplayer.player.domain.repo.PlayerRepo
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +30,11 @@ class ChapterViewModel(
     private val chapterRepo: ChapterRepo,
     private val playerRepo: PlayerRepo,
     private val downloaderRepo: DownloaderRepo,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(3)
 ) : ViewModel() {
 
     fun onLanguageChanged() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             delay(50)
             loadChapters()
         }
@@ -56,7 +59,7 @@ class ChapterViewModel(
     }
 
     private fun loadChapters() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             originalChapters.updateAndGet {
                 chapterRepo.getChapters(
                     getChapterDownloadState = {
@@ -72,7 +75,7 @@ class ChapterViewModel(
     }
 
     fun search(text: String) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             text
                 .takeIf { it.isNotBlank() }
                 ?.trim()
@@ -125,7 +128,7 @@ class ChapterViewModel(
     }
 
     private fun collectPlayerStateUpdates() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             playerRepo.playerState.collectLatest { (idx, state) ->
                 selectedChapterIndx = idx
                 playerState = state
@@ -137,13 +140,13 @@ class ChapterViewModel(
         private set
 
     private fun collectCenterActionUpdates() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             playerRepo.playerAction.collectLatest { playerAction(it) }
         }
     }
 
     fun playerAction(action: PlayerAction) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             when (action) {
                 PlayerAction.Pause -> playerRepo.pause()
                 is PlayerAction.Play -> play()
@@ -184,16 +187,9 @@ class ChapterViewModel(
     }
 
     private fun collectDownloaderStateUpdates() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             downloaderRepo.downloadState.collect { (downloadId, state) ->
                 Log("downloadId= $downloadId - state= $state")
-
-                if (state == DownloadState.NotDownloaded
-                    || state is DownloadState.Paused
-                    || state is DownloadState.Error
-                ) {
-                    downloadedAllEnabled = true
-                }
 
                 originalChapters.update {
                     it.map { chapter ->
@@ -210,7 +206,18 @@ class ChapterViewModel(
                     }
                 }
 
-                updateDownloadedCount()
+                if (state == DownloadState.NotDownloaded
+                    || state is DownloadState.Paused
+                    || state is DownloadState.Error
+                ) {
+                    downloadedAllEnabled = true
+                }
+
+                if (state == DownloadState.NotDownloaded
+                    || state == DownloadState.Completed
+                ) {
+                    updateDownloadedCount()
+                }
             }
         }
     }
@@ -226,19 +233,19 @@ class ChapterViewModel(
     }
 
     fun downloadAll(start: Boolean) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             if (start) {
                 downloadedAllEnabled = false
-                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
-                    if (downloadState == DownloadState.NotDownloaded
-                        || downloadState is DownloadState.Paused
+                originalChapters.value.fastForEach { (id, _, _, _, downloadState) ->
+                    if (downloadState == DownloadState.NotDownloaded ||
+                        downloadState is DownloadState.Paused
                     ) {
                         downloaderRepo.start(id)
                     }
                 }
             } else {
                 downloadedAllEnabled = true
-                originalChapters.value.forEach { (id, _, _, _, downloadState) ->
+                originalChapters.value.fastForEach { (id, _, _, _, downloadState) ->
                     if (downloadState is DownloadState.Downloading
                         || downloadState == DownloadState.Queued
                     ) {
@@ -250,7 +257,7 @@ class ChapterViewModel(
     }
 
     fun downloaderAction(id: String, action: DownloaderAction) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             when (action) {
                 is DownloaderAction.Start -> downloaderRepo.start(id)
                 is DownloaderAction.Pause -> downloaderRepo.pause(id)

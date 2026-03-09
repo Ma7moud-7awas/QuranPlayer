@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.quranplayer.chapter.ui.ChapterListScreen
@@ -47,7 +48,6 @@ import com.m7.quranplayer.player.domain.model.PlayerState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.bg_light
 import quranplayer.composeapp.generated.resources.check_device_connection

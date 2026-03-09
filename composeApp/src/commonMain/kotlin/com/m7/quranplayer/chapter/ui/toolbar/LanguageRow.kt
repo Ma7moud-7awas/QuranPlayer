@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7.quranplayer.core.ui.OptionsRow
@@ -31,7 +32,6 @@ import com.m7.quranplayer.core.ui.theme.Green40
 import com.m7.quranplayer.core.ui.theme.LightGreenGrey
 import com.m7.quranplayer.core.ui.theme.Orange
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.app_will_be_restarted
 import quranplayer.composeapp.generated.resources.current_language

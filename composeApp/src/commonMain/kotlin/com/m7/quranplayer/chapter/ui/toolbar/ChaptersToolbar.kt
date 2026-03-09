@@ -37,13 +37,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.m7.quranplayer.core.ui.OptionsStack
 import com.m7.quranplayer.core.ui.theme.GreenGrey
 import com.m7.quranplayer.core.ui.theme.LightGreenGrey
 import com.m7.quranplayer.core.ui.theme.QuranPlayerTheme
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import quranplayer.composeapp.generated.resources.Res
 import quranplayer.composeapp.generated.resources.chapters
 import quranplayer.composeapp.generated.resources.search_by_name
